@@ -1,9 +1,9 @@
 package org.polytech;
 
-import org.polytech.agent.Agent;
 import org.polytech.agent.Buyer;
 import org.polytech.agent.Provider;
 import org.polytech.agent.Ticket;
+import org.polytech.agent.strategy.NaiveBuyerStrategy;
 
 import java.util.List;
 
@@ -15,7 +15,6 @@ public class Main {
            1 Buyer
          */
         Provider provider = new Provider(List.of(
-                new Ticket(60, "Paris", "Marseille"),
                 new Ticket(70, "Paris", "Marseille"),
                 new Ticket(75, "Paris", "Marseille"),
                 new Ticket(85, "Paris", "Marseille"),
@@ -23,7 +22,8 @@ public class Main {
                 new Ticket(100, "Paris", "Marseille")
         ));
 
-        Buyer buyer = new Buyer(75);
+        Buyer buyer = new Buyer(90);
+        buyer.setNegociationStrategy(new NaiveBuyerStrategy());
 
         Thread providerThread = new Thread(provider);
         Thread buyerThread = new Thread(buyer);

@@ -5,7 +5,7 @@ import java.util.List;
 
 public class Provider extends Agent implements Runnable {
     private static final double MAX_PRICE_INCREASE_PERCENT = 0.10;
-    private static final double MIN_ACCEPTABLE_DECREASE_PERCENT = 0.03;
+    private static final double MIN_ACCEPTABLE_DECREASE_PERCENT = 0.01;
     private double lastProposedPrice = 0.0;
     /**
      * Proposals which are delivered to the buyer

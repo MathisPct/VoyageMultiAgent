@@ -1,18 +1,18 @@
 package org.polytech.agent;
 
+import org.polytech.agent.strategy.NegociationContext;
+import org.polytech.agent.strategy.NegociationStrategy;
+
 import java.time.LocalDateTime;
 
-public class Buyer extends Agent implements Runnable {
-    /**
-     * Max increase price percent per negotiation round
-     */
-    private static final double MAX_PRICE_INCREASE_PERCENT = 0.10;
-    private static final double INITIAL_OFFER_PERCENT = 0.80;
+public class Buyer extends Agent implements Runnable, NegociationStrategy {
     private double lastOfferPrice = 0.0;
     private double budget;
     private Provider currentProvider;
     private int negotiationRounds = 0;
     private final int MAX_ROUNDS = 8;
+
+    private NegociationStrategy negociationStrategy;
 
     public Buyer(double budget) {
         super();
@@ -20,18 +20,23 @@ public class Buyer extends Agent implements Runnable {
         Agent.buyers.add(this);
     }
 
-    private double calculateInitialOffer() {
-        return budget * INITIAL_OFFER_PERCENT;
+    public void setNegociationStrategy(NegociationStrategy negociationStrategy) {
+        this.negociationStrategy = negociationStrategy;
     }
 
-    private double calculateCounterOffer(double providerOffer) {
-        double maxIncrease = lastOfferPrice * MAX_PRICE_INCREASE_PERCENT;
-        return Math.min(budget, lastOfferPrice + maxIncrease);
+    @Override
+    public double calculateInitialOffer(NegociationContext negociationContext) {
+        return this.negociationStrategy.calculateInitialOffer(negociationContext);
     }
 
-    private boolean shouldAcceptOffer(double providerOffer) {
-        return providerOffer <= budget && 
-               (providerOffer - lastOfferPrice <= lastOfferPrice * MAX_PRICE_INCREASE_PERCENT);
+    @Override
+    public double calculateCounterOffer(NegociationContext negociationContext) {
+        return this.negociationStrategy.calculateCounterOffer(negociationContext);
+    }
+
+    @Override
+    public boolean shouldAcceptOffer(NegociationContext negociationContext) {
+        return this.negociationStrategy.shouldAcceptOffer(negociationContext);
     }
 
     @Override
@@ -44,7 +49,7 @@ public class Buyer extends Agent implements Runnable {
 
             double offerPrice;
             if (negotiationRounds == 0) {
-                offerPrice = calculateInitialOffer();
+                offerPrice = calculateInitialOffer(new NegociationContext(budget, 0, lastOfferPrice));
                 lastOfferPrice = offerPrice;
                 Agent.publishToMessageQueue(this.currentProvider, 
                     new Message(this, this.currentProvider, 
@@ -58,7 +63,7 @@ public class Buyer extends Agent implements Runnable {
             switch (response.getOffer().getTypeOffer()) {
                 case AGAINST_PROPOSITION -> {
                     double providerOffer = response.getOffer().getPrice();
-                    if (shouldAcceptOffer(providerOffer)) {
+                    if (this.budget <= providerOffer && this.shouldAcceptOffer(new NegociationContext(budget, providerOffer, lastOfferPrice))) {
                         System.out.println("Buyer accepts offer of " + providerOffer);
                         Agent.publishToMessageQueue(this.currentProvider,
                                 new Message(this, this.currentProvider,
@@ -67,7 +72,7 @@ public class Buyer extends Agent implements Runnable {
                         return;
                     }
                     
-                    double counterOffer = calculateCounterOffer(providerOffer);
+                    double counterOffer = calculateCounterOffer(new NegociationContext(budget, providerOffer, lastOfferPrice));
                     if (counterOffer <= budget) {
                         lastOfferPrice = counterOffer;
                         System.out.println("Buyer counter-offers " + counterOffer);
@@ -82,11 +87,11 @@ public class Buyer extends Agent implements Runnable {
                 }
                 case ACCEPT -> {
                     System.out.println("Buyer accepted the offer.");
-                    activeNegotiation();
+                    checkIfSuperiorToMaxRound();
                 }
                 case REFUSE -> {
                     System.out.println("Buyer refused the offer.");
-                    activeNegotiation();
+                    checkIfSuperiorToMaxRound();
                 }
                 case INITIAL -> {
                     System.out.println("Buyer received an INITIAL offer.");
@@ -96,7 +101,7 @@ public class Buyer extends Agent implements Runnable {
         System.out.println("Buyer has concluded its negotiations.");
     }
 
-    private void activeNegotiation() {
+    private void checkIfSuperiorToMaxRound() {
         if (negotiationRounds >= MAX_ROUNDS) {
             System.out.println("Buyer has reached the maximum number of negotiation rounds.");
         }

@@ -3,16 +3,22 @@ package org.polytech.agent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 
 public class Agent {
     protected static HashMap<Agent, List<Message>> messagesQueue;
     protected static List<Provider> providers;
     protected static List<Buyer> buyers;
+    protected int interest;
 
     static {
         messagesQueue = new HashMap<>();
         providers = new ArrayList<>();
         buyers = new ArrayList<>();
+    }
+
+    public Agent() {
+        this.interest = new Random().nextInt(1, 10 + 1); // between 1 and 10
     }
 
     /**
