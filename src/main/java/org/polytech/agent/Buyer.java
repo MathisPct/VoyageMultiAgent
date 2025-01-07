@@ -4,9 +4,12 @@ import org.polytech.agent.strategy.NegociationContext;
 import org.polytech.agent.strategy.NegociationStrategy;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class Buyer extends Agent implements Runnable, NegociationStrategy {
+    private final Ticket ticket;
     private double lastOfferPrice = 0.0;
+    private double initialOffer;
     private double budget;
     private Provider currentProvider;
     private int negotiationRounds = 0;
@@ -14,9 +17,10 @@ public class Buyer extends Agent implements Runnable, NegociationStrategy {
 
     private NegociationStrategy negociationStrategy;
 
-    public Buyer(double budget) {
+    public Buyer(double budget, Ticket ticket) {
         super();
         this.budget = budget;
+        this.ticket = ticket;
         Agent.buyers.add(this);
     }
 
@@ -49,10 +53,11 @@ public class Buyer extends Agent implements Runnable, NegociationStrategy {
 
             double offerPrice;
             if (negotiationRounds == 0) {
-                offerPrice = calculateInitialOffer(new NegociationContext(budget, 0, lastOfferPrice));
+                offerPrice = calculateInitialOffer(new NegociationContext(budget, 0, lastOfferPrice, initialOffer, this.interest, this.ticket));
                 lastOfferPrice = offerPrice;
+                initialOffer = offerPrice;
                 Agent.publishToMessageQueue(this.currentProvider, 
-                    new Message(this, this.currentProvider, 
+                    new Message(this, this.currentProvider,
                               new Offer(offerPrice, TypeOffer.INITIAL), 
                               LocalDateTime.now()));
             }
@@ -63,7 +68,7 @@ public class Buyer extends Agent implements Runnable, NegociationStrategy {
             switch (response.getOffer().getTypeOffer()) {
                 case AGAINST_PROPOSITION -> {
                     double providerOffer = response.getOffer().getPrice();
-                    if (this.budget <= providerOffer && this.shouldAcceptOffer(new NegociationContext(budget, providerOffer, lastOfferPrice))) {
+                    if (this.budget <= providerOffer && this.shouldAcceptOffer(new NegociationContext(budget, providerOffer, lastOfferPrice, initialOffer, this.interest, this.ticket))) {
                         System.out.println("Buyer accepts offer of " + providerOffer);
                         Agent.publishToMessageQueue(this.currentProvider,
                                 new Message(this, this.currentProvider,
@@ -72,7 +77,7 @@ public class Buyer extends Agent implements Runnable, NegociationStrategy {
                         return;
                     }
                     
-                    double counterOffer = calculateCounterOffer(new NegociationContext(budget, providerOffer, lastOfferPrice));
+                    double counterOffer = calculateCounterOffer(new NegociationContext(budget, providerOffer, lastOfferPrice, initialOffer, this.interest, this.ticket));
                     if (counterOffer <= budget) {
                         lastOfferPrice = counterOffer;
                         System.out.println("Buyer counter-offers " + counterOffer);
