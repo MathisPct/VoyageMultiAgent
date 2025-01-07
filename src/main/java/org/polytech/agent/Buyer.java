@@ -4,7 +4,6 @@ import org.polytech.agent.strategy.NegociationContext;
 import org.polytech.agent.strategy.NegociationStrategy;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 public class Buyer extends Agent implements Runnable, NegociationStrategy {
     private final Ticket ticket;
@@ -19,6 +18,7 @@ public class Buyer extends Agent implements Runnable, NegociationStrategy {
 
     public Buyer(double budget, Ticket ticket) {
         super();
+        this.interest = 9;
         this.budget = budget;
         this.ticket = ticket;
         Agent.buyers.add(this);
@@ -58,7 +58,7 @@ public class Buyer extends Agent implements Runnable, NegociationStrategy {
                 initialOffer = offerPrice;
                 Agent.publishToMessageQueue(this.currentProvider, 
                     new Message(this, this.currentProvider,
-                              new Offer(offerPrice, TypeOffer.INITIAL), 
+                              new Offer(offerPrice, this.ticket, TypeOffer.INITIAL),
                               LocalDateTime.now()));
             }
 
@@ -68,11 +68,11 @@ public class Buyer extends Agent implements Runnable, NegociationStrategy {
             switch (response.getOffer().getTypeOffer()) {
                 case AGAINST_PROPOSITION -> {
                     double providerOffer = response.getOffer().getPrice();
-                    if (this.budget <= providerOffer && this.shouldAcceptOffer(new NegociationContext(budget, providerOffer, lastOfferPrice, initialOffer, this.interest, this.ticket))) {
+                    if (this.budget >= providerOffer && this.shouldAcceptOffer(new NegociationContext(budget, providerOffer, lastOfferPrice, initialOffer, this.interest, this.ticket))) {
                         System.out.println("Buyer accepts offer of " + providerOffer);
                         Agent.publishToMessageQueue(this.currentProvider,
                                 new Message(this, this.currentProvider,
-                                          new Offer(providerOffer, TypeOffer.ACCEPT),
+                                          new Offer(providerOffer, this.ticket, TypeOffer.ACCEPT),
                                           LocalDateTime.now()));
                         return;
                     }
@@ -83,7 +83,7 @@ public class Buyer extends Agent implements Runnable, NegociationStrategy {
                         System.out.println("Buyer counter-offers " + counterOffer);
                         Agent.publishToMessageQueue(this.currentProvider,
                                 new Message(this, this.currentProvider,
-                                          new Offer(counterOffer, TypeOffer.AGAINST_PROPOSITION),
+                                          new Offer(counterOffer, this.ticket, TypeOffer.AGAINST_PROPOSITION),
                                           LocalDateTime.now()));
                     } else {
                         System.out.println("Buyer cannot afford counter-offer");
@@ -94,7 +94,7 @@ public class Buyer extends Agent implements Runnable, NegociationStrategy {
                     System.out.println("Buyer accepted the offer.");
                     checkIfSuperiorToMaxRound();
                 }
-                case REFUSE -> {
+                case END_NEGOCIATION -> {
                     System.out.println("Buyer refused the offer.");
                     checkIfSuperiorToMaxRound();
                 }

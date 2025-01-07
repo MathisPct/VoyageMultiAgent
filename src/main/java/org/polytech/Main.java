@@ -3,7 +3,7 @@ package org.polytech;
 import org.polytech.agent.Buyer;
 import org.polytech.agent.Provider;
 import org.polytech.agent.Ticket;
-import org.polytech.agent.strategy.NaiveBuyerStrategy;
+import org.polytech.agent.strategy.*;
 
 import java.util.List;
 
@@ -22,8 +22,12 @@ public class Main {
                 new Ticket(100, 100 * 0.9,"Paris", "Nantes")
         ));
 
-        Buyer buyer = new Buyer(90, provider.getTickets().get(0));
-        buyer.setNegociationStrategy(new NaiveBuyerStrategy());
+        System.out.println("Provider interest " + provider.getInterest());
+
+        Buyer buyer = new Buyer(90, provider.getTickets().get(4));
+        System.out.println("Buyer interest " + buyer.getInterest());
+        buyer.setNegociationStrategy(new InterestBasedBuyerStrategy());
+        provider.setNegociationStrategy(new InterestBasedProviderStrategy());
 
         Thread providerThread = new Thread(provider);
         Thread buyerThread = new Thread(buyer);

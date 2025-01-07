@@ -1,8 +1,6 @@
 package org.polytech.agent.strategy;
 
-public class InterestBasedStrategy implements NegociationStrategy {
-
-
+public class InterestBasedProviderStrategy implements NegociationStrategy {
     private double calculatePercentageInitialOffer(int envie) {
         return (-5.56* envie + 85.56) / 100;
     }
@@ -18,11 +16,14 @@ public class InterestBasedStrategy implements NegociationStrategy {
 
     @Override
     public double calculateCounterOffer(NegociationContext negociationContext) {
-         return negociationContext.initialOffer() * (1 + calculatePercentageCounterOffer(negociationContext.interest()));
+        if(negociationContext.lastOfferPrice() == 0) {
+            return negociationContext.ticket().getPrice() * (1 - calculatePercentageCounterOffer(negociationContext.interest()));
+        }
+        return negociationContext.lastOfferPrice() * (1 - calculatePercentageCounterOffer(negociationContext.interest()));
     }
 
     @Override
     public boolean shouldAcceptOffer(NegociationContext negociationContext) {
-        return false;
+        return negociationContext.offer() >= negociationContext.ticket().getPrice() - negociationContext.ticket().getPrice() * ((double) negociationContext.interest() /100);
     }
 }

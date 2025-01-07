@@ -21,6 +21,10 @@ public class Agent {
         this.interest = new Random().nextInt(1, 10 + 1); // between 1 and 10
     }
 
+    public int getInterest() {
+        return interest;
+    }
+
     /**
      * To distribute a message to a recipient
      *
