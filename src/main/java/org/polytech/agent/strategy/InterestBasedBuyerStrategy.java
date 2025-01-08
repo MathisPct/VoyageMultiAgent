@@ -1,28 +1,50 @@
 package org.polytech.agent.strategy;
 
 public class InterestBasedBuyerStrategy implements NegociationStrategy {
-
-
-    private double calculatePercentageInitialOffer(int envie) {
-        return (-5.56 * envie + 85.56) / 100;
+    /**
+     * Calculates what fraction of the ticket's price should be used for the initial offer,
+     * based on buyer's interest. Higher interest => a higher fraction.
+     */
+    private double calculatePercentageInitialOffer(int interest) {
+        // For example, interest = 1 => ~30%% of ticket price, interest = 10 => ~80%.
+        double base = 0.25;   // baseline fraction
+        double step = 0.055;  // how much each interest point adds
+        double fraction = base + interest * step;
+        // Cap it at 1.0 in case fraction goes above 100%
+        return Math.min(fraction, 1.0);
     }
 
-    private double calculatePercentageCounterOffer(int envie) {
-        return (double) envie / 100;
+    /**
+     * Calculates how much the buyer is willing to increase the offer in each counter.
+     * A higher interest => a bigger increase.
+     */
+    private double calculatePercentageCounterOffer(int interest) {
+        // For instance, interest=1 => +3% each round, interest=10 => +30% each round.
+        double step = 0.03;
+        return interest * step;
     }
 
     @Override
     public double calculateInitialOffer(NegociationContext negociationContext) {
-        return (int) (this.calculatePercentageInitialOffer(negociationContext.interest()) * negociationContext.ticket().getPrice());
+        // Buyer starts with a fraction of the ticket's base price
+        double fraction = calculatePercentageInitialOffer(negociationContext.interest());
+        return negociationContext.ticket().getPrice() * fraction;
     }
 
     @Override
     public double calculateCounterOffer(NegociationContext negociationContext) {
-        return negociationContext.lastOfferPrice() * (1 + calculatePercentageCounterOffer(negociationContext.interest()));
+        // Increase last offer by a fraction based on interest
+        double increaseFactor = 1.0 + calculatePercentageCounterOffer(negociationContext.interest());
+        return negociationContext.lastOfferPrice() * increaseFactor;
     }
 
     @Override
     public boolean shouldAcceptOffer(NegociationContext negociationContext) {
-        return negociationContext.offer() - negociationContext.lastOfferPrice() <= negociationContext.lastOfferPrice() * ((double) negociationContext.interest() /100);
+        // Accept if the difference between the provider's offer and our last offer
+        // is below a certain percentage of our last offer (scaled by interest).
+        double difference = negociationContext.offer() - negociationContext.lastOfferPrice();
+        // Example: interest=10 => up to 30%, interest=1 => up to 3%.
+        double threshold = negociationContext.lastOfferPrice() * calculatePercentageCounterOffer(negociationContext.interest());
+        return difference <= threshold;
     }
 }

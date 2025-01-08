@@ -16,4 +16,8 @@ public class Ticket {
     public double getPrice() {
         return price;
     }
+
+    public double getMinPrice() {
+        return minPrice;
+    }
 }
