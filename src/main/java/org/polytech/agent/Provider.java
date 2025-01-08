@@ -1,16 +1,12 @@
 package org.polytech.agent;
 
 import org.polytech.agent.strategy.NegociationContext;
-import org.polytech.agent.strategy.NegociationStrategy;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-public class Provider extends Agent implements Runnable, NegociationStrategy {
-    private static final double MAX_PRICE_INCREASE_PERCENT = 0.10;
-    private static final double MIN_ACCEPTABLE_DECREASE_PERCENT = 0.01;
+public class Provider extends Agent implements Runnable {
     private double lastProposedPrice = 0.0;
-    private NegociationStrategy negociationStrategy;
     /**
      * Proposals which are delivered to the buyer
      */
@@ -19,35 +15,12 @@ public class Provider extends Agent implements Runnable, NegociationStrategy {
 
     public Provider(List<Ticket> tickets) {
         this.tickets = tickets;
-        this.interest = 2;
+        this.interest = 9;
         Agent.providers.add(this);
     }
 
     public List<Ticket> getTickets() {
         return tickets;
-    }
-
-    public void setNegociationStrategy(NegociationStrategy negociationStrategy) {
-        this.negociationStrategy = negociationStrategy;
-    }
-
-    @Override
-    public double calculateInitialOffer(NegociationContext negociationContext) {
-        return this.negociationStrategy.calculateInitialOffer(negociationContext);
-    }
-
-    @Override
-    public double calculateCounterOffer(NegociationContext negociationContext) {
-        return this.negociationStrategy.calculateCounterOffer(negociationContext);
-    }
-
-    @Override
-    public boolean shouldAcceptOffer(NegociationContext negociationContext) {
-        return this.negociationStrategy.shouldAcceptOffer(negociationContext);
-    }
-
-    private boolean isOfferAcceptable(double proposedPrice) {
-        return tickets.stream().anyMatch(t -> t.getPrice() - t.getPrice() * MIN_ACCEPTABLE_DECREASE_PERCENT  <= proposedPrice);
     }
 
     @Override

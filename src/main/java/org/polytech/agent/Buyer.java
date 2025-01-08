@@ -5,7 +5,7 @@ import org.polytech.agent.strategy.NegociationStrategy;
 
 import java.time.LocalDateTime;
 
-public class Buyer extends Agent implements Runnable, NegociationStrategy {
+public class Buyer extends Agent implements Runnable {
     private final Ticket ticket;
     private double lastOfferPrice = 0.0;
     private double initialOffer;
@@ -14,33 +14,12 @@ public class Buyer extends Agent implements Runnable, NegociationStrategy {
     private int negotiationRounds = 0;
     private final int MAX_ROUNDS = 8;
 
-    private NegociationStrategy negociationStrategy;
-
     public Buyer(double budget, Ticket ticket) {
         super();
-        this.interest = 9;
+        this.interest = 3;
         this.budget = budget;
         this.ticket = ticket;
         Agent.buyers.add(this);
-    }
-
-    public void setNegociationStrategy(NegociationStrategy negociationStrategy) {
-        this.negociationStrategy = negociationStrategy;
-    }
-
-    @Override
-    public double calculateInitialOffer(NegociationContext negociationContext) {
-        return this.negociationStrategy.calculateInitialOffer(negociationContext);
-    }
-
-    @Override
-    public double calculateCounterOffer(NegociationContext negociationContext) {
-        return this.negociationStrategy.calculateCounterOffer(negociationContext);
-    }
-
-    @Override
-    public boolean shouldAcceptOffer(NegociationContext negociationContext) {
-        return this.negociationStrategy.shouldAcceptOffer(negociationContext);
     }
 
     @Override
