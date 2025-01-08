@@ -1,8 +1,10 @@
 package org.polytech;
 
 import org.polytech.agent.Buyer;
+import org.polytech.agent.Company;
 import org.polytech.agent.Provider;
 import org.polytech.agent.Ticket;
+import org.polytech.agent.constraints.BuyerConstraints;
 import org.polytech.agent.strategy.*;
 
 import java.util.List;
@@ -10,17 +12,30 @@ import java.util.List;
 public class Main {
     public static void main(String[] args) {
         Provider provider = new Provider(List.of(
-                new Ticket(70, 70 * 0.9, "Paris", "Marseille"),
-                new Ticket(75, 75 * 0.9, "Paris", "Lyon"),
-                new Ticket(85, 85 * 0.9, "Paris", "Lille"),
-                new Ticket(90, 90 * 0.9, "Paris", "Bordeaux"),
-                new Ticket(100, 100 * 0.9, "Paris", "Nantes")
+                new Ticket(85, 85 * 0.9, "Paris", "Amsterdam", Company.TRANSAVIA),
+                new Ticket(75, 75 * 0.9, "Paris", "Amsterdam", Company.KLM),
+                new Ticket(70, 70 * 0.9, "Paris", "Amsterdam", Company.KLM),
+                new Ticket(80, 80 * 0.9, "Paris", "Amsterdam", Company.TRANSAVIA),
+                new Ticket(75, 75 * 0.9, "Paris", "Lyon", Company.TRANSAVIA),
+                new Ticket(85, 85 * 0.9, "Paris", "Lille", Company.TRANSAVIA),
+                new Ticket(90, 90 * 0.9, "Paris", "Bordeaux", Company.AIR_FRANCE),
+                new Ticket(100, 100 * 0.9, "Amsterdam", "Suede", Company.KLM)
         ), 5);
         System.out.println("Provider interest: " + provider.getInterest());
 
-        Buyer buyer1 = new Buyer(70, provider.getTickets().get(0), "Buyer1", 9);
-        Buyer buyer2 = new Buyer(95, provider.getTickets().get(1), "Buyer2", 9);
-        Buyer buyer3 = new Buyer(70, provider.getTickets().get(2), "Buyer3", 9);
+        BuyerConstraints buyerConstraints1 = new BuyerConstraints(75);
+        buyerConstraints1.addAllowedCompany(Company.KLM);
+        buyerConstraints1.addDestination("Amsterdam");
+        Buyer buyer1 = new Buyer(buyerConstraints1, "Buyer1", 7);
+
+        BuyerConstraints buyerConstraints2 = new BuyerConstraints(75);
+        buyerConstraints2.addAllowedCompany(Company.KLM);
+        buyerConstraints2.addDestination("Amsterdam");
+        Buyer buyer2 = new Buyer(buyerConstraints2,"Buyer2", 9);
+
+        BuyerConstraints buyerConstraints3 = new BuyerConstraints(85);
+        buyerConstraints3.addDestination("Suede");
+        Buyer buyer3 = new Buyer(buyerConstraints3, "Buyer3", 9);
 
         buyer1.setNegociationStrategy(new InterestBasedBuyerStrategy());
         buyer2.setNegociationStrategy(new InterestBasedBuyerStrategy());
