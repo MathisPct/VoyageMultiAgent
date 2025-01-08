@@ -103,6 +103,10 @@ public class Buyer extends Agent implements Runnable, NegociationStrategy {
                 }
             }
         }
+        Agent.publishToMessageQueue(this.currentProvider,
+                new Message(this, this.currentProvider,
+                        new Offer(-1, this.ticket, TypeOffer.END_NEGOCIATION),
+                        LocalDateTime.now()));
         System.out.println("Buyer has concluded its negotiations.");
     }
 

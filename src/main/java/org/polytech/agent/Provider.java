@@ -78,7 +78,7 @@ public class Provider extends Agent implements Runnable, NegociationStrategy {
                     active = false;
                 }
                 case END_NEGOCIATION -> {
-                    System.out.println("Provider refused the offer of " + proposalPrice);
+                    System.out.println("Provider receive end negotiation message");
                     active = false;
                 }
                 case AGAINST_PROPOSITION -> {
