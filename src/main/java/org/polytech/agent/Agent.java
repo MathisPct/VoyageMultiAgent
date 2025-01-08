@@ -7,22 +7,26 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class Agent implements NegociationStrategy {
-    protected static HashMap<Agent, List<Message>> messagesQueue;
+    protected static ConcurrentHashMap<Agent, BlockingQueue<Message>> messagesQueue;
     protected static List<Provider> providers;
     protected static List<Buyer> buyers;
     protected int interest;
     private NegociationStrategy negociationStrategy;
 
     static {
-        messagesQueue = new HashMap<>();
+        messagesQueue = new ConcurrentHashMap<>();
         providers = new ArrayList<>();
         buyers = new ArrayList<>();
     }
 
     public Agent() {
         this.interest = new Random().nextInt(1, 10 + 1); // between 1 and 10
+        messagesQueue.putIfAbsent(this, new LinkedBlockingQueue<>());
     }
 
     public void setNegociationStrategy(NegociationStrategy negociationStrategy) {
@@ -55,31 +59,18 @@ public class Agent implements NegociationStrategy {
      * @param message   the message
      */
     public static void publishToMessageQueue(Agent recipient, Message message) {
-        List<Message> messages = Agent.messagesQueue.getOrDefault(recipient, new ArrayList<>());
-        messages.add(message);
-        Agent.messagesQueue.put(recipient, messages);
+        BlockingQueue<Message> queue = messagesQueue.get(recipient);
+        if (queue != null) {
+            queue.offer(message);
+        }
     }
 
-    protected Message waitUntilReceiveMessage(Agent receiver) {
-        while (true) {
-            List<Message> receiverMessages = Agent.messagesQueue.get(receiver);
-            if (receiverMessages != null && !receiverMessages.isEmpty()) {
-                synchronized (receiverMessages) {
-                    for (Message message : receiverMessages) {
-                        if (!message.isRead()) {
-                            message.setRead(true);
-                            receiverMessages.remove(message);
-                            return message;
-                        }
-                    }
-                }
-            }
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                return null;
-            }
+    protected Message waitUntilReceiveMessage() {
+        try {
+            return messagesQueue.get(this).take();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return null;
         }
     }
 }

@@ -69,7 +69,7 @@ public class Buyer extends Agent implements Runnable {
                 );
             }
 
-            Message response = waitUntilReceiveMessage(this);
+            Message response = waitUntilReceiveMessage();
             negotiationRounds++;
 
             switch (response.getOffer().getTypeOffer()) {

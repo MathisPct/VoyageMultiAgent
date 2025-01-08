@@ -23,7 +23,7 @@ public class Provider extends Agent implements Runnable {
     @Override
     public void run() {
         while (active) {
-            Message message = waitUntilReceiveMessage(this);
+            Message message = waitUntilReceiveMessage();
             if (message == null) {
                 System.out.println("[Provider] did not receive a valid message.");
                 continue;
