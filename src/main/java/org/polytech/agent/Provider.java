@@ -3,7 +3,7 @@ package org.polytech.agent;
 import org.polytech.agent.strategy.NegociationContext;
 
 import java.time.LocalDateTime;
-import java.util.Comparator;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 public class Provider extends Agent implements Runnable {
     private double lastProposedPrice = 0.0;
+    private List<Message> pendingDemandMessages = new ArrayList<>();
     private List<Ticket> tickets;
     private boolean active = true;
     private ConcurrentHashMap<Ticket, ConcurrentHashMap<Buyer, Double>> offersMap = new ConcurrentHashMap<>();
@@ -27,14 +28,14 @@ public class Provider extends Agent implements Runnable {
 
     }
 
-    public Map<Ticket, BuyerChoice> selectBestSale() {
-        Map<Ticket, BuyerChoice> bestSales = new ConcurrentHashMap<>();
+    public Map<Ticket, ProviderChoice> selectBestSale() {
+        Map<Ticket, ProviderChoice> bestSales = new ConcurrentHashMap<>();
         for (Ticket ticket : this.offersMap.keySet()) {
             Buyer bestBuyer = this.offersMap.get(ticket).entrySet().stream()
                     .max(Map.Entry.comparingByValue())
                     .map(Map.Entry::getKey)
                     .orElse(null);
-            bestSales.put(ticket, new BuyerChoice(bestBuyer, this.offersMap.get(ticket).get(bestBuyer)));
+            bestSales.put(ticket, new ProviderChoice(bestBuyer, this.offersMap.get(ticket).get(bestBuyer)));
         }
 
         return bestSales;
@@ -60,6 +61,7 @@ public class Provider extends Agent implements Runnable {
     @Override
     public void run() {
         while (active) {
+
             Message message = waitUntilReceiveMessage();
             if (message == null) {
                 System.out.println("[Provider] did not receive a valid message.");
@@ -101,8 +103,34 @@ public class Provider extends Agent implements Runnable {
                             )
                     );
                 }
-                case ACCEPT -> {
+                case FIRST_ACCEPT -> {
                     System.out.println("[Provider] Buyer accepts the proposed price of " + proposalPrice);
+                }
+                case DEMAND_CONFIRMATION_ACHAT -> {
+                    pendingDemandMessages.add(message);
+
+                    System.out.println("[Provider] One Buyer demands confirmation of purchase.");
+
+                    // on filtre le ticket demandé, et on récupère toutes les offres pour ce ticket
+                    Ticket ticket = message.getOffer().getTicket();
+                    Map<Buyer, Double> offers = this.offersMap.get(ticket);
+                    Buyer bestBuyer = offers.entrySet().stream()
+                            .max(Map.Entry.comparingByValue())
+                            .map(Map.Entry::getKey)
+                            .orElse(null);
+
+                    if (bestBuyer == message.getIssuer()) {
+                        Agent.publishToMessageQueue(
+                                message.getIssuer(),
+                                new Message(
+                                        this,
+                                        message.getIssuer(),
+                                        new Offer(offers.get(bestBuyer), ticket, TypeOffer.POSITIVE_RESPONSE_CONFIRMATION_ACHAT),
+                                        LocalDateTime.now()
+                                )
+                        );
+                        this.active = false;
+                    }
                 }
                 case END_NEGOCIATION -> {
                     message.getOffer();
@@ -125,7 +153,7 @@ public class Provider extends Agent implements Runnable {
                                 new Message(
                                         this,
                                         message.getIssuer(),
-                                        new Offer(proposalPrice, message.getOffer().getTicket(), TypeOffer.ACCEPT),
+                                        new Offer(proposalPrice, message.getOffer().getTicket(), TypeOffer.FIRST_ACCEPT),
                                         LocalDateTime.now()
                                 )
                         );
@@ -149,6 +177,8 @@ public class Provider extends Agent implements Runnable {
                 }
             }
         }
+
+
         System.out.println("[Provider] has concluded its operations");
     }
 

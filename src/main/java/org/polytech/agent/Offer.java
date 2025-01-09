@@ -11,6 +11,10 @@ public class Offer {
         this.ticket = ticket;
     }
 
+    public void setTypeOffer(TypeOffer typeOffer) {
+        this.typeOffer = typeOffer;
+    }
+
     public double getPrice() {
         return this.price;
     }

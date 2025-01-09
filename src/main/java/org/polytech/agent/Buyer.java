@@ -4,6 +4,7 @@ import org.polytech.agent.constraints.BuyerConstraints;
 import org.polytech.agent.strategy.NegociationContext;
 
 import java.time.LocalDateTime;
+import java.util.*;
 
 public class Buyer extends Agent implements Runnable {
     private final BuyerConstraints buyerConstraints;
@@ -15,6 +16,7 @@ public class Buyer extends Agent implements Runnable {
     private final int MAX_ROUNDS = 8;
     private final String buyerName;
     private boolean active;
+    private Stack<BuyerChoice> choices = new Stack<>();
 
     public Buyer(BuyerConstraints buyerConstraints, String buyerName, int interest) {
         super();
@@ -33,11 +35,66 @@ public class Buyer extends Agent implements Runnable {
 
     @Override
     public void run() {
-        this.chosenTicketToNegociateWith = findSuitableTicket();
+        this.makeAllNegociation();
+    }
+
+    private void makeAllNegociation() {
+        findSuitableTicket().forEach((ticket, provider) -> {
+            // Première phase de négociation
+            Offer finalOffer = processNegociation(ticket, provider);
+            choices.push(new BuyerChoice(provider, finalOffer));
+        });
+
+        // Deuxième phase de négociation: choisir la meilleure offre parmi les offres reçues et on attend la confirmation de l'achat
+        if (findSuitableTicket().isEmpty()) {
+            System.out.println("[" + buyerName + "] found no suitable ticket based on constraints. Stopping.");
+            return;
+        }
+
+        BuyerChoice choice = chooseBestOffer();
+        System.out.println("[" + buyerName + "] has chosen the best offer: " + choice.offer().getPrice() + " from " + choice.provider().getName());
+    }
+
+    private BuyerChoice chooseBestOffer() {
+        choices.sort(Comparator.comparingDouble(choice -> choice.offer().getPrice()));
+
+        do {
+            BuyerChoice choice = choices.pop();
+
+            // on envoie le message pour demander la confirmation de l'achat
+            Offer offer = choice.offer();
+            offer.setTypeOffer(TypeOffer.DEMAND_CONFIRMATION_ACHAT);
+
+            Agent.publishToMessageQueue(
+                    choice.provider(),
+                    new Message(
+                            this,
+                            choice.provider(),
+                            offer,
+                            LocalDateTime.now()
+                    )
+            );
+
+            Message message = waitUntilReceiveMessage();
+
+            if (message.getOffer().getTypeOffer() == TypeOffer.POSITIVE_RESPONSE_CONFIRMATION_ACHAT) {
+                System.out.println("[" + buyerName + "] received POSITIVE_RESPONSE_CONFIRMATION_ACHAT from Provider. Ending negotiation.");
+                return choice;
+            }
+        } while (!choices.isEmpty());
+
+        return null;
+    }
+
+    // Première phase
+    private Offer processNegociation(Ticket ticket, Provider provider) {
+        this.chosenTicketToNegociateWith = ticket;
+        this.currentProvider = provider;
+
         if (this.chosenTicketToNegociateWith == null) {
             System.out.println("[" + buyerName + "]" + " found no suitable ticket based on constraints. Stopping.");
             this.active = false;
-            return;
+            return null;
         }
 
         while ((negotiationRounds < MAX_ROUNDS) && active) {
@@ -98,7 +155,7 @@ public class Buyer extends Agent implements Runnable {
                                 new Message(
                                         this,
                                         this.currentProvider,
-                                        new Offer(providerOffer, this.chosenTicketToNegociateWith, TypeOffer.ACCEPT),
+                                        new Offer(providerOffer, this.chosenTicketToNegociateWith, TypeOffer.FIRST_ACCEPT),
                                         LocalDateTime.now()
                                 )
                         );
@@ -135,7 +192,7 @@ public class Buyer extends Agent implements Runnable {
                         }
                     }
                 }
-                case ACCEPT -> {
+                case FIRST_ACCEPT -> {
                     System.out.println("[" + buyerName + "] sees that the Provider ACCEPTED.");
                     checkIfSuperiorToMaxRound();
                     this.active = false;
@@ -152,18 +209,24 @@ public class Buyer extends Agent implements Runnable {
 
         System.out.println("[" + buyerName + "] concluded its negotiations.");
 
+        Offer finalOffer = new Offer(this.lastOfferPrice, this.chosenTicketToNegociateWith, TypeOffer.END_NEGOCIATION);
         Agent.publishToMessageQueue(
                 this.currentProvider,
                 new Message(
                         this,
                         this.currentProvider,
-                        new Offer(this.lastOfferPrice, this.chosenTicketToNegociateWith, TypeOffer.END_NEGOCIATION),
+                        finalOffer,
                         LocalDateTime.now()
                 )
         );
+
+        return finalOffer;
     }
 
-    private Ticket findSuitableTicket() {
+
+    private Map<Ticket, Provider> findSuitableTicket() {
+        Map<Ticket, Provider> suitableTickets = new HashMap<>();
+
         // for now, iterate providers and pick the first matching ticket
         for (Provider p : Agent.providers) {
             for (Ticket t : p.getTickets()) {
@@ -171,12 +234,11 @@ public class Buyer extends Agent implements Runnable {
                 boolean allowedCompany = buyerConstraints.isCompanyAllowed(t.getCompany());
                 boolean isDestinationCorrect = buyerConstraints.isDestinationSuitable(t.getArrival());
                 if (withinBudget && allowedCompany && isDestinationCorrect) {
-                    this.currentProvider = p;
-                    return t;
+                    suitableTickets.put(t, p);
                 }
             }
         }
-        return null;
+        return suitableTickets;
     }
 
     private void checkIfSuperiorToMaxRound() {

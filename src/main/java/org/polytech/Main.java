@@ -57,7 +57,6 @@ public class Main {
             buyer1Thread.join();
             buyer2Thread.join();
             buyer3Thread.join();
-            provider.setActive(false);
 
             System.out.println(provider.selectBestSale());
         } catch (InterruptedException e) {

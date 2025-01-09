@@ -1,4 +1,4 @@
 package org.polytech.agent;
 
-public record BuyerChoice(Buyer buyer, double price) {
+public record BuyerChoice(Provider provider, Offer offer) {
 }
