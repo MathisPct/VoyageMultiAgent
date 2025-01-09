@@ -3,12 +3,17 @@ package org.polytech.agent;
 import org.polytech.agent.strategy.NegociationContext;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class Provider extends Agent implements Runnable {
     private double lastProposedPrice = 0.0;
     private List<Ticket> tickets;
     private boolean active = true;
+    private ConcurrentHashMap<Ticket, ConcurrentHashMap<Buyer, Double>> offersMap = new ConcurrentHashMap<>();
 
     public Provider(List<Ticket> tickets, int interest) {
         this.tickets = tickets;
@@ -16,8 +21,40 @@ public class Provider extends Agent implements Runnable {
         Agent.providers.add(this);
     }
 
+    public synchronized void receiveFinalOffer(Buyer buyer, Ticket ticket, double offerPrice) {
+        offersMap.putIfAbsent(ticket, new ConcurrentHashMap<>());
+        offersMap.get(ticket).put(buyer, offerPrice);
+
+    }
+
+    public Map<Ticket, BuyerChoice> selectBestSale() {
+        Map<Ticket, BuyerChoice> bestSales = new ConcurrentHashMap<>();
+        for (Ticket ticket : this.offersMap.keySet()) {
+            Buyer bestBuyer = this.offersMap.get(ticket).entrySet().stream()
+                    .max(Map.Entry.comparingByValue())
+                    .map(Map.Entry::getKey)
+                    .orElse(null);
+            bestSales.put(ticket, new BuyerChoice(bestBuyer, this.offersMap.get(ticket).get(bestBuyer)));
+        }
+
+        return bestSales;
+    }
+
+    private void checkAllOfferReceived(Ticket ticket) {
+        List<Buyer> interestedBuyers = this.getInterestedBuyers(ticket);
+    }
+
+    private List<Buyer> getInterestedBuyers(Ticket ticket) {
+        return buyers.stream().filter(buyer -> buyer.isInterestedIn(ticket)).collect(Collectors.toList());
+    }
+
     public List<Ticket> getTickets() {
         return tickets;
+    }
+
+    @Override
+    public String getName() {
+        return "Provider";
     }
 
     @Override
@@ -68,6 +105,8 @@ public class Provider extends Agent implements Runnable {
                     System.out.println("[Provider] Buyer accepts the proposed price of " + proposalPrice);
                 }
                 case END_NEGOCIATION -> {
+                    message.getOffer();
+                    this.receiveFinalOffer(buyerSender, message.getOffer().getTicket(), message.getOffer().getPrice());
                     System.out.println("[Provider] Buyer ended the negotiation.");
                 }
                 case AGAINST_PROPOSITION -> {
@@ -111,5 +150,9 @@ public class Provider extends Agent implements Runnable {
             }
         }
         System.out.println("[Provider] has concluded its operations");
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 }

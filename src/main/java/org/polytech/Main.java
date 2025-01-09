@@ -31,11 +31,11 @@ public class Main {
         BuyerConstraints buyerConstraints2 = new BuyerConstraints(75);
         buyerConstraints2.addAllowedCompany(Company.KLM);
         buyerConstraints2.addDestination("Amsterdam");
-        Buyer buyer2 = new Buyer(buyerConstraints2,"Buyer2", 9);
+        Buyer buyer2 = new Buyer(buyerConstraints2,"Buyer2", 6);
 
         BuyerConstraints buyerConstraints3 = new BuyerConstraints(85);
         buyerConstraints3.addDestination("Suede");
-        Buyer buyer3 = new Buyer(buyerConstraints3, "Buyer3", 9);
+        Buyer buyer3 = new Buyer(buyerConstraints3, "Buyer3", 6);
 
         buyer1.setNegociationStrategy(new InterestBasedBuyerStrategy());
         buyer2.setNegociationStrategy(new InterestBasedBuyerStrategy());
@@ -52,5 +52,16 @@ public class Main {
         buyer1Thread.start();
         buyer2Thread.start();
         buyer3Thread.start();
+
+        try {
+            buyer1Thread.join();
+            buyer2Thread.join();
+            buyer3Thread.join();
+            provider.setActive(false);
+
+            System.out.println(provider.selectBestSale());
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -4,14 +4,13 @@ import org.polytech.agent.strategy.NegociationContext;
 import org.polytech.agent.strategy.NegociationStrategy;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class Agent implements NegociationStrategy {
+public abstract class Agent implements NegociationStrategy {
     protected static ConcurrentHashMap<Agent, BlockingQueue<Message>> messagesQueue;
     protected static List<Provider> providers;
     protected static List<Buyer> buyers;
@@ -28,6 +27,8 @@ public class Agent implements NegociationStrategy {
         this.interest = new Random().nextInt(1, 10 + 1); // between 1 and 10
         messagesQueue.putIfAbsent(this, new LinkedBlockingQueue<>());
     }
+
+    public abstract String getName();
 
     public void setNegociationStrategy(NegociationStrategy negociationStrategy) {
         this.negociationStrategy = negociationStrategy;
@@ -72,5 +73,10 @@ public class Agent implements NegociationStrategy {
             Thread.currentThread().interrupt();
             return null;
         }
+    }
+
+    @Override
+    public String toString() {
+        return "Agent: " + getName() + " " + " with interest=" + interest;
     }
 }

@@ -27,6 +27,11 @@ public class Buyer extends Agent implements Runnable {
     }
 
     @Override
+    public String getName() {
+        return this.buyerName;
+    }
+
+    @Override
     public void run() {
         this.chosenTicketToNegociateWith = findSuitableTicket();
         if (this.chosenTicketToNegociateWith == null) {
@@ -178,5 +183,9 @@ public class Buyer extends Agent implements Runnable {
         if (negotiationRounds >= MAX_ROUNDS) {
             System.out.println("[" + buyerName + "] has reached the maximum number of negotiation rounds.");
         }
+    }
+
+    public boolean isInterestedIn(Ticket ticket) {
+        return this.chosenTicketToNegociateWith.equals(ticket);
     }
 }
