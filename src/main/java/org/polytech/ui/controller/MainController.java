@@ -4,12 +4,15 @@ import javafx.collections.ListChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.VBox;
 import org.polytech.agent.*;
 import org.polytech.agent.constraints.BuyerConstraints;
 import org.polytech.agent.strategy.InterestBasedBuyerStrategy;
 import org.polytech.agent.strategy.InterestBasedProviderStrategy;
+import org.polytech.messaging.AgentCouple;
+import org.polytech.messaging.Message;
 import org.polytech.messaging.MessageManagerSimpleImpl;
 
 import java.net.URL;
@@ -17,17 +20,9 @@ import java.util.*;
 
 public class MainController implements Initializable {
     @FXML
-    private VBox providerBox;
+    private ListView<AgentCouple> conversationsList;
     @FXML
-    private ListView<String> providerList;
-    @FXML
-    private VBox buyerBox;
-    @FXML
-    private ListView<String> buyerList;
-    @FXML
-    private ListView<String> buyersContactsOfProvider;
-    @FXML
-    private ListView<String> providersContactsOfBuyers;
+    private ListView<Message> messagesList;
 
     private Provider provider;
     private final List<Buyer> buyers = new ArrayList<>();
@@ -53,36 +48,67 @@ public class MainController implements Initializable {
         createBuyer("Buyer2", 6, 75, List.of(Company.KLM), List.of("Amsterdam"));
         createBuyer("Buyer3", 6, 85, List.of(), List.of("Suede"));
 
+        // Configuration de l'affichage des conversations
+        conversationsList.setCellFactory(param -> new ListCell<AgentCouple>() {
+            @Override
+            protected void updateItem(AgentCouple item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(String.format("Conversation: %s - %s", 
+                        item.agent1().getName(), 
+                        item.agent2().getName()));
+                }
+            }
+        });
 
-        // Affichage initial
-        providerList.getItems().add(
-                provider.getName() + " (interest=" + provider.getInterest() + ")"
-        );
-        for (Buyer b : buyers) {
-            buyerList.getItems().add(
-                    b.getName() + " (interest=" + b.getInterest() + ")"
-            );
+        // Configuration de l'affichage des messages
+        messagesList.setCellFactory(param -> new ListCell<Message>() {
+            @Override
+            protected void updateItem(Message item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(String.format("[%s] %s -> %s: %.2f€ (%s)", 
+                        item.getDateEmission().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss")),
+                        item.getIssuer().getName(),
+                        item.getReceiver().getName(),
+                        item.getOffer().getPrice(),
+                        item.getOffer().getTypeOffer()));
+                }
+            }
+        });
+
+        // Gestionnaire d'événements pour la sélection d'une conversation
+        conversationsList.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                messagesList.getItems().clear();
+                List<Message> messages = messageManager.getAgentMessageHashMap().get(newVal);
+                if (messages != null) {
+                    List<Message> sortedMessages = new ArrayList<>(messages);
+                    sortedMessages.sort(Comparator.comparing(Message::getDateEmission));
+                    messagesList.getItems().addAll(sortedMessages);
+                }
+            }
+        });
+
+        // Timer pour mettre à jour la liste des conversations régulièrement
+        Timer timer = new Timer(true);
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                javafx.application.Platform.runLater(() -> updateConversationsList());
+            }
+        }, 0, 1000); // Met à jour toutes les secondes
+    }
+
+    private void updateConversationsList() {
+        Set<AgentCouple> currentConversations = messageManager.getAgentMessageHashMap().keySet();
+        if (!currentConversations.equals(new HashSet<>(conversationsList.getItems()))) {
+            conversationsList.getItems().setAll(currentConversations);
         }
-
-        buyerList.getSelectionModel().getSelectedItems().addListener((ListChangeListener<String>) c -> {
-            providersContactsOfBuyers.getItems().clear();
-            for (String buyerNameString : c.getList()) {
-                for (Buyer buyer : buyers) {
-                    if (buyerNameString.contains(buyer.getName())) {
-                        // TODO: afficher liste agents contacts
-                    }
-                }
-            }
-        });
-
-        providerList.getSelectionModel().getSelectedItems().addListener((ListChangeListener<String>) c -> {
-            buyersContactsOfProvider.getItems().clear();
-            for (String providerNameString : c.getList()) {
-                if (providerNameString.contains(provider.getName())) {
-                    // TODO: afficher liste agents contacts
-                }
-            }
-        });
     }
 
     /**

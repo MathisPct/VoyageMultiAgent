@@ -13,12 +13,21 @@ public class MessageManagerSimpleImpl implements MessageManager {
         return agentMessageHashMap;
     }
 
-    public void sendMessage(Agent recipient, Message message) {
-        AgentCouple agentCouple = new AgentCouple(message.getIssuer(), recipient);
-        if (!agentMessageHashMap.containsKey(agentCouple)) {
-            agentMessageHashMap.put(agentCouple, new ArrayList<>());
+    public synchronized void sendMessage(Agent recipient, Message message) {
+        Agent firstAgent, secondAgent;
+        if (message.getIssuer() instanceof org.polytech.agent.Provider) {
+            firstAgent = message.getIssuer();
+            secondAgent = recipient;
+        } else if (recipient instanceof org.polytech.agent.Provider) {
+            firstAgent = recipient;
+            secondAgent = message.getIssuer();
+        } else {
+            throw new IllegalArgumentException("At least one agent must be a Provider");
         }
-        agentMessageHashMap.get(agentCouple).add(message);
+        AgentCouple agentCouple = new AgentCouple(firstAgent, secondAgent);
+
+        List<Message> messages = agentMessageHashMap.computeIfAbsent(agentCouple, k -> new ArrayList<>());
+        messages.add(message);
         recipient.receiveMessage(message);
     }
 }

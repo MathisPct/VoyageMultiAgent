@@ -9,38 +9,26 @@
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="org.polytech.ui.controller.MainController"
-            prefHeight="400.0" prefWidth="600.0">
+            prefHeight="400.0" prefWidth="800.0">
     <top>
-        <Label text="Gestion des Agents" style="-fx-font-size: 16; -fx-padding: 5;" />
-        <Button text="Lancer la négociation" onAction="#launchNegociation" />
+        <VBox spacing="10" style="-fx-padding: 10;">
+            <Label text="Gestion des Agents" style="-fx-font-size: 16;" />
+            <Button text="Lancer la négociation" onAction="#launchNegociation" />
+        </VBox>
     </top>
     <center>
-        <SplitPane prefWidth="600.0" prefHeight="350.0">
+        <SplitPane>
             <items>
-                <TitledPane text="Fournisseurs" expanded="true">
-                    <content>
-                        <VBox fx:id="providerBox" spacing="10" style="-fx-padding: 10;">
-                            <ListView fx:id="providerList" />
-                            <TitledPane text="Messages Fournisseurs" expanded="true">
-                                <content>
-                                    <ListView fx:id="buyersContactsOfProvider"/>
-                                </content>
-                            </TitledPane>
-                        </VBox>
-                    </content>
-                </TitledPane>
-                <TitledPane text="Acheteurs" expanded="true">
-                    <content>
-                        <VBox fx:id="buyerBox" spacing="10" style="-fx-padding: 10;">
-                            <ListView fx:id="buyerList" />
-                            <TitledPane text="Messages Acheteurs" expanded="true">
-                                <content>
-                                    <ListView fx:id="providersContactsOfBuyers"/>
-                                </content>
-                            </TitledPane>
-                        </VBox>
-                    </content>
-                </TitledPane>
+                <VBox>
+                    <TitledPane text="Conversations" expanded="true" VBox.vgrow="ALWAYS">
+                        <ListView fx:id="conversationsList" VBox.vgrow="ALWAYS" />
+                    </TitledPane>
+                </VBox>
+                <VBox>
+                    <TitledPane text="Messages de la conversation" expanded="true" VBox.vgrow="ALWAYS">
+                        <ListView fx:id="messagesList" VBox.vgrow="ALWAYS" />
+                    </TitledPane>
+                </VBox>
             </items>
         </SplitPane>
     </center>
