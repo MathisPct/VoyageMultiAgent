@@ -2,6 +2,8 @@ package org.polytech.agent;
 
 import org.polytech.agent.constraints.BuyerConstraints;
 import org.polytech.agent.strategy.NegociationContext;
+import org.polytech.messaging.Message;
+import org.polytech.messaging.MessageManager;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -18,8 +20,8 @@ public class Buyer extends Agent implements Runnable {
     private boolean active;
     private Stack<BuyerChoice> choices = new Stack<>();
 
-    public Buyer(BuyerConstraints buyerConstraints, String buyerName, int interest) {
-        super();
+    public Buyer(MessageManager messageManager, BuyerConstraints buyerConstraints, String buyerName, int interest) {
+        super(messageManager);
         this.interest = interest;
         this.buyerConstraints = buyerConstraints;
         this.buyerName = buyerName;
@@ -65,7 +67,7 @@ public class Buyer extends Agent implements Runnable {
             Offer offer = choice.offer();
             offer.setTypeOffer(TypeOffer.DEMAND_CONFIRMATION_ACHAT);
 
-            Agent.publishToMessageQueue(
+            this.sendMessage(
                     choice.provider(),
                     new Message(
                             this,
@@ -122,7 +124,7 @@ public class Buyer extends Agent implements Runnable {
 
                 System.out.println("[" + buyerName + "] sends INITIAL offer of: " + offerPrice);
 
-                Agent.publishToMessageQueue(this.currentProvider,
+                this.sendMessage(this.currentProvider,
                         new Message(this,
                                 this.currentProvider,
                                 new Offer(offerPrice, this.chosenTicketToNegociateWith, TypeOffer.INITIAL),
@@ -150,7 +152,7 @@ public class Buyer extends Agent implements Runnable {
                             ))
                     ) {
                         System.out.println("[" + buyerName + "] accepts the offer of " + providerOffer);
-                        Agent.publishToMessageQueue(
+                        this.sendMessage(
                                 this.currentProvider,
                                 new Message(
                                         this,
@@ -177,7 +179,7 @@ public class Buyer extends Agent implements Runnable {
                             lastOfferPrice = counterOffer;
                             System.out.println("[" + buyerName + "] counters with " + counterOffer);
 
-                            Agent.publishToMessageQueue(
+                            this.sendMessage(
                                     this.currentProvider,
                                     new Message(
                                             this,
@@ -210,7 +212,7 @@ public class Buyer extends Agent implements Runnable {
         System.out.println("[" + buyerName + "] concluded its negotiations.");
 
         Offer finalOffer = new Offer(this.lastOfferPrice, this.chosenTicketToNegociateWith, TypeOffer.END_NEGOCIATION);
-        Agent.publishToMessageQueue(
+        this.sendMessage(
                 this.currentProvider,
                 new Message(
                         this,

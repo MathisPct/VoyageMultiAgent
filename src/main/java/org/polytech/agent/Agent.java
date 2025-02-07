@@ -2,30 +2,35 @@ package org.polytech.agent;
 
 import org.polytech.agent.strategy.NegociationContext;
 import org.polytech.agent.strategy.NegociationStrategy;
+import org.polytech.messaging.Message;
+import org.polytech.messaging.MessageManager;
+import org.polytech.messaging.MessageManagerSimpleImpl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Observable;
 import java.util.Random;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public abstract class Agent implements NegociationStrategy {
-    protected static ConcurrentHashMap<Agent, BlockingQueue<Message>> messagesQueue;
+    protected BlockingQueue<Message> messagesQueue;
     protected static List<Provider> providers;
     protected static List<Buyer> buyers;
     protected int interest;
     private NegociationStrategy negociationStrategy;
 
+    private final MessageManager messageManager;
+
     static {
-        messagesQueue = new ConcurrentHashMap<>();
         providers = new ArrayList<>();
         buyers = new ArrayList<>();
     }
 
-    public Agent() {
+    public Agent(MessageManager messageManager) {
         this.interest = new Random().nextInt(1, 10 + 1); // between 1 and 10
-        messagesQueue.putIfAbsent(this, new LinkedBlockingQueue<>());
+        messagesQueue = new LinkedBlockingQueue<>();
+        this.messageManager = messageManager;
     }
 
     public abstract String getName();
@@ -59,16 +64,19 @@ public abstract class Agent implements NegociationStrategy {
      * @param recipient (destinataire) which will receive the message
      * @param message   the message
      */
-    public static void publishToMessageQueue(Agent recipient, Message message) {
-        BlockingQueue<Message> queue = messagesQueue.get(recipient);
-        if (queue != null) {
-            queue.offer(message);
+    public void sendMessage(Agent recipient, Message message) {
+        this.messageManager.sendMessage(recipient, message);
+    }
+
+    public void receiveMessage(Message message) {
+        if (this.messagesQueue != null) {
+            this.messagesQueue.offer(message);
         }
     }
 
     protected Message waitUntilReceiveMessage() {
         try {
-            return messagesQueue.get(this).take();
+            return this.messagesQueue.take();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return null;
