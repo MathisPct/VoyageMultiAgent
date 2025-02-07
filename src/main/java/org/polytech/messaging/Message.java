@@ -1,6 +1,10 @@
-package org.polytech.agent;
+package org.polytech.messaging;
+
+import org.polytech.agent.Agent;
+import org.polytech.agent.Offer;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 public class Message {
@@ -45,5 +49,10 @@ public class Message {
 
     public LocalDateTime getDateEmission() {
         return dateEmission;
+    }
+
+    @Override
+    public String toString() {
+        return dateEmission.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss.SSS")) +  " Emetteur : " + issuer.getName() + " - Destinataire : " + receiver.getName() + " - Offre : " + offer.toString();
     }
 }

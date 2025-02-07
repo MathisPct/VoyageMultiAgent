@@ -1,6 +1,8 @@
 package org.polytech.agent;
 
 import org.polytech.agent.strategy.NegociationContext;
+import org.polytech.messaging.Message;
+import org.polytech.messaging.MessageManager;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -16,7 +18,8 @@ public class Provider extends Agent implements Runnable {
     private boolean active = true;
     private ConcurrentHashMap<Ticket, ConcurrentHashMap<Buyer, Double>> offersMap = new ConcurrentHashMap<>();
 
-    public Provider(List<Ticket> tickets, int interest) {
+    public Provider(MessageManager messageManager, List<Ticket> tickets, int interest) {
+        super(messageManager);
         this.tickets = tickets;
         this.interest = interest;
         Agent.providers.add(this);
@@ -93,7 +96,7 @@ public class Provider extends Agent implements Runnable {
                     lastProposedPrice = counterOffer;
                     System.out.println("[Provider] Counters with " + counterOffer);
 
-                    Agent.publishToMessageQueue(
+                    this.sendMessage(
                             message.getIssuer(),
                             new Message(
                                     this,
@@ -120,7 +123,7 @@ public class Provider extends Agent implements Runnable {
                             .orElse(null);
 
                     if (bestBuyer == message.getIssuer()) {
-                        Agent.publishToMessageQueue(
+                        this.sendMessage(
                                 message.getIssuer(),
                                 new Message(
                                         this,
@@ -148,7 +151,7 @@ public class Provider extends Agent implements Runnable {
                     );
                     if (this.shouldAcceptOffer(negociationContext)) {
                         System.out.println("[Provider] Accepts the buyer's offer of " + proposalPrice);
-                        Agent.publishToMessageQueue(
+                        this.sendMessage(
                                 message.getIssuer(),
                                 new Message(
                                         this,
@@ -161,7 +164,7 @@ public class Provider extends Agent implements Runnable {
                         double counterOffer = calculateCounterOffer(negociationContext);
                         lastProposedPrice = counterOffer;
                         System.out.println("[Provider] Counters with " + counterOffer);
-                        Agent.publishToMessageQueue(
+                        this.sendMessage(
                                 message.getIssuer(),
                                 new Message(
                                         this,

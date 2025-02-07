@@ -26,4 +26,13 @@ public class Offer {
     public Ticket getTicket() {
         return ticket;
     }
+
+    @Override
+    public String toString() {
+        return "Offer{" +
+                "price=" + price +
+                ", typeOffer=" + typeOffer +
+                ", ticket=" + ticket.toString() +
+                '}';
+    }
 }
