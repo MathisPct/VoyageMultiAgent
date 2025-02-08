@@ -4,10 +4,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-
 import javafx.application.Application;
-
-import java.io.File;
 import java.net.URL;
 
 public class Main extends Application {
@@ -17,8 +14,8 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        URL fxmlFile = new File("src/main/resources/main.fxml").toURI().toURL();
-        Parent root = FXMLLoader.load(fxmlFile);
+        URL fxmlUrl = getClass().getResource("/main.fxml");
+        Parent root = FXMLLoader.load(fxmlUrl);
         Scene scene = new Scene(root);
         primaryStage.setTitle("VoyageMultiAgent");
         primaryStage.setScene(scene);

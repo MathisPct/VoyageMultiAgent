@@ -19,6 +19,7 @@ public abstract class Agent implements NegociationStrategy {
     protected static List<Buyer> buyers;
     protected int interest;
     private NegociationStrategy negociationStrategy;
+    private String name;
 
     private final MessageManager messageManager;
 
@@ -27,13 +28,20 @@ public abstract class Agent implements NegociationStrategy {
         buyers = new ArrayList<>();
     }
 
-    public Agent(MessageManager messageManager) {
+    public Agent(MessageManager messageManager, String name) {
         this.interest = new Random().nextInt(1, 10 + 1); // between 1 and 10
         messagesQueue = new LinkedBlockingQueue<>();
         this.messageManager = messageManager;
+        this.name = name;
     }
 
-    public abstract String getName();
+    public String getName() {
+        return this.name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public void setNegociationStrategy(NegociationStrategy negociationStrategy) {
         this.negociationStrategy = negociationStrategy;
@@ -56,6 +64,10 @@ public abstract class Agent implements NegociationStrategy {
 
     public int getInterest() {
         return interest;
+    }
+
+    public void setInterest(int interest) {
+        this.interest = interest;
     }
 
     /**
@@ -81,6 +93,30 @@ public abstract class Agent implements NegociationStrategy {
             Thread.currentThread().interrupt();
             return null;
         }
+    }
+
+    public static List<Provider> getProviders() {
+        return new ArrayList<>(providers);
+    }
+
+    public static List<Buyer> getBuyers() {
+        return new ArrayList<>(buyers);
+    }
+
+    public static void addProvider(Provider provider) {
+        providers.add(provider);
+    }
+
+    public static void addBuyer(Buyer buyer) {
+        buyers.add(buyer);
+    }
+
+    public static void removeProvider(Provider provider) {
+        providers.remove(provider);
+    }
+
+    public static void removeBuyer(Buyer buyer) {
+        buyers.remove(buyer);
     }
 
     @Override
