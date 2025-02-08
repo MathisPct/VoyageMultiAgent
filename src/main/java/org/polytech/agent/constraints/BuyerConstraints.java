@@ -43,4 +43,24 @@ public class BuyerConstraints {
     public boolean isDestinationSuitable(String destination) {
         return this.destinations.contains(destination);
     }
+
+    public List<Company> getAllowedCompanies() {
+        return new ArrayList<>(allowedCompanies);
+    }
+
+    public List<String> getDestinations() {
+        return new ArrayList<>(destinations);
+    }
+
+    public void setMaxBudget(double maxBudget) {
+        this.maxBudget = maxBudget;
+    }
+
+    public void setAllowedCompanies(List<Company> companies) {
+        this.allowedCompanies = new ArrayList<>(companies);
+    }
+
+    public void setDestinations(List<String> destinations) {
+        this.destinations = new ArrayList<>(destinations);
+    }
 }

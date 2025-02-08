@@ -18,11 +18,11 @@ public class Provider extends Agent implements Runnable {
     private boolean active = true;
     private ConcurrentHashMap<Ticket, ConcurrentHashMap<Buyer, Double>> offersMap = new ConcurrentHashMap<>();
 
-    public Provider(MessageManager messageManager, List<Ticket> tickets, int interest) {
-        super(messageManager);
+    public Provider(MessageManager messageManager, List<Ticket> tickets, int interest, String name) {
+        super(messageManager, name);
         this.tickets = tickets;
         this.interest = interest;
-        Agent.providers.add(this);
+        Agent.addProvider(this);
     }
 
     public synchronized void receiveFinalOffer(Buyer buyer, Ticket ticket, double offerPrice) {
@@ -56,9 +56,8 @@ public class Provider extends Agent implements Runnable {
         return tickets;
     }
 
-    @Override
-    public String getName() {
-        return "Provider";
+    public void setTickets(List<Ticket> tickets) {
+        this.tickets = tickets;
     }
 
     @Override

@@ -33,6 +33,10 @@ public class Ticket {
         return arrival;
     }
 
+    public String getDeparture() {
+        return departure;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
