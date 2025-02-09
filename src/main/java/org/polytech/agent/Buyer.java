@@ -16,14 +16,12 @@ public class Buyer extends Agent implements Runnable {
     private Provider currentProvider;
     private int negotiationRounds = 0;
     private final int MAX_ROUNDS = 8;
-    private boolean active;
     private Stack<BuyerChoice> choices = new Stack<>();
 
     public Buyer(MessageManager messageManager, BuyerConstraints buyerConstraints, String name, int interest) {
         super(messageManager, name);
         this.interest = interest;
         this.buyerConstraints = buyerConstraints;
-        this.active = true;
         Agent.addBuyer(this);
     }
     
@@ -35,6 +33,8 @@ public class Buyer extends Agent implements Runnable {
     private void makeAllNegociation() {
         findSuitableTicket().forEach((ticket, provider) -> {
             // Première phase de négociation
+            System.out.println(this.getName() + " begins the negociation for " + ticket);
+            this.negotiationRounds = 0;
             Offer finalOffer = processNegociation(ticket, provider);
             choices.push(new BuyerChoice(provider, finalOffer));
         });
@@ -46,13 +46,20 @@ public class Buyer extends Agent implements Runnable {
         }
 
         BuyerChoice choice = chooseBestOffer();
-        System.out.println("[" + this.getName() + "] has chosen the best offer: " + choice.offer().getPrice() + " from " + choice.provider().getName());
+        if(choice != null) {
+            System.out.println("[" + this.getName() + "] has chosen the best offer: " + choice.offer().getPrice() + " from " + choice.provider().getName());
+        }
     }
 
     private BuyerChoice chooseBestOffer() {
-        choices.sort(Comparator.comparingDouble(choice -> choice.offer().getPrice()));
+        if (choices.isEmpty()) {
+            System.out.println("[" + this.getName() + "] has no offers to choose from.");
+            return null;
+        }
 
-        do {
+        choices.sort(Comparator.comparingDouble(choice -> -choice.offer().getPrice())); // ordre du plus petit au plus grand
+
+        while (!choices.isEmpty()) {
             BuyerChoice choice = choices.pop();
 
             // on envoie le message pour demander la confirmation de l'achat
@@ -71,12 +78,17 @@ public class Buyer extends Agent implements Runnable {
 
             Message message = waitUntilReceiveMessage();
 
-            if (message.getOffer().getTypeOffer() == TypeOffer.POSITIVE_RESPONSE_CONFIRMATION_ACHAT) {
-                System.out.println("[" + this.getName() + "] received POSITIVE_RESPONSE_CONFIRMATION_ACHAT from Provider. Ending negotiation.");
-                return choice;
-            }
-        } while (!choices.isEmpty());
+            TypeOffer responseType = message.getOffer().getTypeOffer();
 
+            if (responseType == TypeOffer.POSITIVE_RESPONSE_CONFIRMATION_ACHAT) {
+                System.out.println("[" + this.getName() + "] received POSITIVE_RESPONSE_CONFIRMATION_ACHAT from Provider for " + choice.offer().getTicket());
+                return choice;
+            } else if (responseType == TypeOffer.NEGATIVE_RESPONSE_CONFIRMATION_ACHAT) {
+                System.out.println("[" + this.getName() + "] received NEGATIVE_RESPONSE_CONFIRMATION_ACHAT from Provider for " + choice.offer().getTicket());
+            }
+        }
+
+        System.out.println("[" + this.getName() + "] no offers were accepted. Ending negotiation.");
         return null;
     }
 
@@ -84,10 +96,11 @@ public class Buyer extends Agent implements Runnable {
     private Offer processNegociation(Ticket ticket, Provider provider) {
         this.chosenTicketToNegociateWith = ticket;
         this.currentProvider = provider;
+        boolean active = true;
 
         if (this.chosenTicketToNegociateWith == null) {
             System.out.println("[" + this.getName() + "]" + " found no suitable ticket based on constraints. Stopping.");
-            this.active = false;
+            active = false;
             return null;
         }
 
@@ -153,7 +166,7 @@ public class Buyer extends Agent implements Runnable {
                                         LocalDateTime.now()
                                 )
                         );
-                        this.active = false;
+                        active = false;
                     }
                     else {
                         double counterOffer = calculateCounterOffer(
@@ -182,18 +195,18 @@ public class Buyer extends Agent implements Runnable {
                             );
                         } else {
                             System.out.println("[" + this.getName() + "] cannot afford the counter-offer. Ending negotiation.");
-                            this.active = false;
+                            active = false;
                         }
                     }
                 }
                 case FIRST_ACCEPT -> {
                     System.out.println("[" + this.getName() + "] sees that the Provider ACCEPTED.");
                     checkIfSuperiorToMaxRound();
-                    this.active = false;
+                    active = false;
                 }
-                case END_NEGOCIATION -> {
+                case END_FIRST_PHASE_NEGOCIATION -> {
                     System.out.println("[" + this.getName() + "] sees that the Provider ended the negotiation.");
-                    this.active = false;
+                    active = false;
                 }
                 case INITIAL -> {
                     System.out.println("[" + this.getName() + "] received an INITIAL offer (unexpected in this flow).");
@@ -201,9 +214,9 @@ public class Buyer extends Agent implements Runnable {
             }
         }
 
-        System.out.println("[" + this.getName() + "] concluded its negotiations.");
+        System.out.println("[" + this.getName() + "] concluded the first phase of negotiation");
 
-        Offer finalOffer = new Offer(this.lastOfferPrice, this.chosenTicketToNegociateWith, TypeOffer.END_NEGOCIATION);
+        Offer finalOffer = new Offer(this.lastOfferPrice, this.chosenTicketToNegociateWith, TypeOffer.END_FIRST_PHASE_NEGOCIATION);
         this.sendMessage(
                 this.currentProvider,
                 new Message(
