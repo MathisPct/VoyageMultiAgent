@@ -28,19 +28,22 @@ public class Provider extends Agent implements Runnable {
     public synchronized void receiveFinalOffer(Buyer buyer, Ticket ticket, double offerPrice) {
         offersMap.putIfAbsent(ticket, new ConcurrentHashMap<>());
         offersMap.get(ticket).put(buyer, offerPrice);
-
     }
 
     public Map<Ticket, ProviderChoice> selectBestSale() {
         Map<Ticket, ProviderChoice> bestSales = new ConcurrentHashMap<>();
         for (Ticket ticket : this.offersMap.keySet()) {
-            Buyer bestBuyer = this.offersMap.get(ticket).entrySet().stream()
-                    .max(Map.Entry.comparingByValue())
-                    .map(Map.Entry::getKey)
-                    .orElse(null);
-            bestSales.put(ticket, new ProviderChoice(bestBuyer, this.offersMap.get(ticket).get(bestBuyer)));
+            ConcurrentHashMap<Buyer, Double> ticketOffers = this.offersMap.get(ticket);
+            if (ticketOffers != null && !ticketOffers.isEmpty()) {
+                Buyer bestBuyer = ticketOffers.entrySet().stream()
+                        .max(Map.Entry.comparingByValue())
+                        .map(Map.Entry::getKey)
+                        .orElse(null);
+                if (bestBuyer != null) {
+                    bestSales.put(ticket, new ProviderChoice(bestBuyer, ticketOffers.get(bestBuyer)));
+                }
+            }
         }
-
         return bestSales;
     }
 
@@ -66,22 +69,18 @@ public class Provider extends Agent implements Runnable {
 
             Message message = waitUntilReceiveMessage();
             if (message == null) {
-                System.out.println("[Provider] did not receive a valid message.");
+                System.out.println("[" + this.getName() + "]"  + " did not receive a valid message.");
                 continue;
             }
 
             double proposalPrice = message.getOffer().getPrice();
+            Ticket ticket = message.getOffer().getTicket();
 
             Buyer buyerSender = (Buyer) message.getIssuer();
-            String buyerName = "[Provider]<--[" + buyerSender.getClass().getSimpleName() + "]";
-
-            System.out.println(buyerName + " => Offer Type: "
-                    + message.getOffer().getTypeOffer()
-                    + ", Proposed Price: " + proposalPrice);
 
             switch (message.getOffer().getTypeOffer()) {
                 case INITIAL -> {
-                    System.out.println("[Provider] Received INITIAL offer of " + proposalPrice);
+                    System.out.println("[" + this.getName() + "]"  + " Received INITIAL offer of " + proposalPrice);
                     double counterOffer = calculateCounterOffer(
                             new NegociationContext(
                                     0,              // budget du Provider (optionnel)
@@ -93,7 +92,7 @@ public class Provider extends Agent implements Runnable {
                             )
                     );
                     lastProposedPrice = counterOffer;
-                    System.out.println("[Provider] Counters with " + counterOffer);
+                    System.out.println("[" + this.getName() + "]"  + " Counters with " + counterOffer);
 
                     this.sendMessage(
                             message.getIssuer(),
@@ -106,38 +105,66 @@ public class Provider extends Agent implements Runnable {
                     );
                 }
                 case FIRST_ACCEPT -> {
-                    System.out.println("[Provider] Buyer accepts the proposed price of " + proposalPrice);
+                    System.out.println("[" + this.getName() + "] " + buyerSender.getName() + " first accepts the proposed price of " + proposalPrice);
                 }
                 case DEMAND_CONFIRMATION_ACHAT -> {
                     pendingDemandMessages.add(message);
-
-                    System.out.println("[Provider] One Buyer demands confirmation of purchase.");
+                    System.out.println("[" + this.getName() + "] "  + buyerSender.getName() + " demands confirmation of purchase.");
 
                     // on filtre le ticket demandé, et on récupère toutes les offres pour ce ticket
-                    Ticket ticket = message.getOffer().getTicket();
-                    Map<Buyer, Double> offers = this.offersMap.get(ticket);
-                    Buyer bestBuyer = offers.entrySet().stream()
-                            .max(Map.Entry.comparingByValue())
-                            .map(Map.Entry::getKey)
-                            .orElse(null);
+                    offersMap.putIfAbsent(ticket, new ConcurrentHashMap<>());
+                    ConcurrentHashMap<Buyer, Double> offers = offersMap.get(ticket);
 
-                    if (bestBuyer == message.getIssuer()) {
-                        this.sendMessage(
+                    if (offers != null && !offers.isEmpty()) {
+                        Buyer bestBuyer = offers.entrySet().stream()
+                                .max(Map.Entry.comparingByValue())
+                                .map(Map.Entry::getKey)
+                                .orElse(null);
+
+                        if (bestBuyer != null) {
+                            TypeOffer responseType;
+                            double offerPrice = offers.get(bestBuyer);
+                            
+                            if (bestBuyer == message.getIssuer() && !ticket.hasBeenSelled()) {
+                                responseType = TypeOffer.POSITIVE_RESPONSE_CONFIRMATION_ACHAT;
+                                offersMap.get(ticket).entrySet().removeIf(entry -> entry.getKey() == bestBuyer);
+                                // On retire les autres offres placées par l'acheteur sur les autres ticket
+                                offersMap.forEach((t, offersMap) -> offersMap.entrySet().removeIf(entry -> entry.getKey() == bestBuyer));
+                                System.out.println("[" + this.getName() + "]"  + " has accepted the offer of " + bestBuyer.getName() + " for " + ticket);
+                            } else {
+                                responseType = TypeOffer.NEGATIVE_RESPONSE_CONFIRMATION_ACHAT;
+                                offerPrice = message.getOffer().getPrice(); // On renvoie le prix proposé par l'acheteur
+                            }
+
+                            this.sendMessage(
                                 message.getIssuer(),
                                 new Message(
-                                        this,
-                                        message.getIssuer(),
-                                        new Offer(offers.get(bestBuyer), ticket, TypeOffer.POSITIVE_RESPONSE_CONFIRMATION_ACHAT),
-                                        LocalDateTime.now()
+                                    this,
+                                    message.getIssuer(),
+                                    new Offer(offerPrice, ticket, responseType),
+                                    LocalDateTime.now()
                                 )
+                            );
+                            if(responseType == TypeOffer.POSITIVE_RESPONSE_CONFIRMATION_ACHAT) {
+                                ticket.hasBeenSelled(true);
+                            }
+                        }
+                    } else {
+                        // Si pas d'offres, envoyer une réponse négative
+                        this.sendMessage(
+                            message.getIssuer(),
+                            new Message(
+                                this,
+                                message.getIssuer(),
+                                new Offer(message.getOffer().getPrice(), ticket, TypeOffer.NEGATIVE_RESPONSE_CONFIRMATION_ACHAT),
+                                LocalDateTime.now()
+                            )
                         );
-                        this.active = false;
                     }
                 }
-                case END_NEGOCIATION -> {
-                    message.getOffer();
+                case END_FIRST_PHASE_NEGOCIATION -> {
                     this.receiveFinalOffer(buyerSender, message.getOffer().getTicket(), message.getOffer().getPrice());
-                    System.out.println("[Provider] Buyer ended the negotiation.");
+                    System.out.println("[" + this.getName() + "] "  + buyerSender.getName() + " ended the first phase of negotiation, received its final offer.");
                 }
                 case AGAINST_PROPOSITION -> {
                     NegociationContext negociationContext = new NegociationContext(
@@ -149,7 +176,7 @@ public class Provider extends Agent implements Runnable {
                             message.getOffer().getTicket()
                     );
                     if (this.shouldAcceptOffer(negociationContext)) {
-                        System.out.println("[Provider] Accepts the buyer's offer of " + proposalPrice);
+                        System.out.println("[" + this.getName() + "]"  + " Accepts " + buyerSender.getName() + " offer of " + proposalPrice + " for " + ticket);
                         this.sendMessage(
                                 message.getIssuer(),
                                 new Message(
@@ -162,7 +189,7 @@ public class Provider extends Agent implements Runnable {
                     } else {
                         double counterOffer = calculateCounterOffer(negociationContext);
                         lastProposedPrice = counterOffer;
-                        System.out.println("[Provider] Counters with " + counterOffer);
+                        System.out.println("[" + this.getName() + "]"  + " Counters with " + counterOffer);
                         this.sendMessage(
                                 message.getIssuer(),
                                 new Message(
@@ -175,13 +202,12 @@ public class Provider extends Agent implements Runnable {
                     }
                 }
                 default -> {
-                    System.out.println("[Provider] Unknown type of offer");
+                    System.out.println("[" + this.getName() + "]"  + " Unknown type of offer");
                 }
             }
         }
 
-
-        System.out.println("[Provider] has concluded its operations");
+        System.out.println("[" + this.getName() + "]"  + " has concluded its operations");
     }
 
     public void setActive(boolean active) {

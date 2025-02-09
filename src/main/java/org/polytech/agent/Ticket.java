@@ -8,6 +8,10 @@ public class Ticket {
     private double price;
     private double minPrice;
     private Company company;
+    /**
+     * Indique si le billet a été vendu ou non
+     */
+    private boolean hasBeenSelled;
 
     public Ticket(double price, double minPrice, String departure, String arrival, Company company) {
         this.price = price;
@@ -15,6 +19,7 @@ public class Ticket {
         this.arrival = arrival;
         this.minPrice = minPrice;
         this.company = company;
+        this.hasBeenSelled = false;
     }
 
     public double getPrice() {
@@ -59,5 +64,13 @@ public class Ticket {
                 ", minPrice=" + minPrice +
                 ", company=" + company +
                 '}';
+    }
+
+    public void hasBeenSelled(boolean value) {
+        this.hasBeenSelled = value;
+    }
+
+    public boolean hasBeenSelled() {
+        return this.hasBeenSelled;
     }
 }
