@@ -30,4 +30,8 @@ public class MessageManagerSimpleImpl implements MessageManager {
         messages.add(message);
         recipient.receiveMessage(message);
     }
+
+    public void reset() {
+        this.agentMessageHashMap.clear();
+    }
 }

@@ -86,6 +86,13 @@ public abstract class Agent implements NegociationStrategy {
         }
     }
 
+    public void reset() {
+        this.messagesQueue.clear();
+        this.resetSpecific();
+    }
+
+    protected abstract void resetSpecific();
+
     protected Message waitUntilReceiveMessage() {
         try {
             return this.messagesQueue.take();

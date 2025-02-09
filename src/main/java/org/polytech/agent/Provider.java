@@ -13,7 +13,6 @@ import java.util.stream.Collectors;
 
 public class Provider extends Agent implements Runnable {
     private double lastProposedPrice = 0.0;
-    private List<Message> pendingDemandMessages = new ArrayList<>();
     private List<Ticket> tickets;
     private boolean active = true;
     private ConcurrentHashMap<Ticket, ConcurrentHashMap<Buyer, Double>> offersMap = new ConcurrentHashMap<>();
@@ -108,7 +107,6 @@ public class Provider extends Agent implements Runnable {
                     System.out.println("[" + this.getName() + "] " + buyerSender.getName() + " first accepts the proposed price of " + proposalPrice);
                 }
                 case DEMAND_CONFIRMATION_ACHAT -> {
-                    pendingDemandMessages.add(message);
                     System.out.println("[" + this.getName() + "] "  + buyerSender.getName() + " demands confirmation of purchase.");
 
                     // on filtre le ticket demandé, et on récupère toutes les offres pour ce ticket
@@ -210,7 +208,13 @@ public class Provider extends Agent implements Runnable {
         System.out.println("[" + this.getName() + "]"  + " has concluded its operations");
     }
 
-    public void setActive(boolean active) {
-        this.active = active;
+    @Override
+    protected void resetSpecific() {
+        this.active = false;
+        this.offersMap.clear();
+        for (Ticket ticket : this.tickets) {
+            ticket.hasBeenSelled(false);
+        }
+        this.active = true;
     }
 }

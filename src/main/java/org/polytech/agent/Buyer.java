@@ -265,4 +265,14 @@ public class Buyer extends Agent implements Runnable {
     public void setBuyerConstraints(BuyerConstraints constraints) {
         this.buyerConstraints = constraints;
     }
+
+    @Override
+    protected void resetSpecific() {
+        this.choices.clear();
+        this.chosenTicketToNegociateWith = null;
+        this.lastOfferPrice = 0;
+        this.initialOffer = 0;
+        this.currentProvider = null;
+        this.negotiationRounds = 0;
+    }
 }

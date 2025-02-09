@@ -356,4 +356,13 @@ public class MainController implements Initializable {
         providers.forEach(provider -> new Thread(provider).start());
         buyers.forEach(buyer -> new Thread(buyer).start());
     }
+
+    @FXML
+    public void resetNegociation(ActionEvent actionEvent) {
+        providers.forEach(Agent::reset);
+        buyers.forEach(Agent::reset);
+
+        this.messagesList.getItems().clear();
+        this.messageManager.reset();
+    }
 }
