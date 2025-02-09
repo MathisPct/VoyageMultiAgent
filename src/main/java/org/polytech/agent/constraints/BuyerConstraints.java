@@ -10,6 +10,7 @@ public class BuyerConstraints {
     private List<Company> allowedCompanies;
     private List<Company> disallowedCompanies;
     private List<String> destinations;
+    private int coalitionSize = 1; // Default to 1 (individual buyer)
 
     public BuyerConstraints(double maxBudget) {
         this.maxBudget = maxBudget;
@@ -62,5 +63,13 @@ public class BuyerConstraints {
 
     public void setDestinations(List<String> destinations) {
         this.destinations = new ArrayList<>(destinations);
+    }
+
+    public void setCoalitionSize(int size) {
+        this.coalitionSize = size;
+    }
+
+    public int getCoalitionSize() {
+        return coalitionSize;
     }
 }

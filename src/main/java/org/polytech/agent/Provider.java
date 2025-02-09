@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import java.util.HashMap;
 
 public class Provider extends Agent implements Runnable {
     private double lastProposedPrice = 0.0;
@@ -123,12 +124,15 @@ public class Provider extends Agent implements Runnable {
                             TypeOffer responseType;
                             double offerPrice = offers.get(bestBuyer);
                             
-                            if (bestBuyer == message.getIssuer() && !ticket.hasBeenSelled()) {
+                            int requestedTickets = bestBuyer.getBuyerConstraints().getCoalitionSize(); // TODO: le faire dans le message
+                            if (bestBuyer == message.getIssuer() && !ticket.hasBeenSelled() && ticket.getQuantity() >= requestedTickets) {
                                 responseType = TypeOffer.POSITIVE_RESPONSE_CONFIRMATION_ACHAT;
                                 offersMap.get(ticket).entrySet().removeIf(entry -> entry.getKey() == bestBuyer);
                                 // On retire les autres offres placées par l'acheteur sur les autres ticket
                                 offersMap.forEach((t, offersMap) -> offersMap.entrySet().removeIf(entry -> entry.getKey() == bestBuyer));
-                                System.out.println("[" + this.getName() + "]"  + " has accepted the offer of " + bestBuyer.getName() + " for " + ticket);
+                                System.out.println("[" + this.getName() + "]" + " has accepted the offer of " + bestBuyer.getName() + " for " + requestedTickets + " tickets of " + ticket);
+                                
+                                ticket.decrementQuantity(requestedTickets);
                             } else {
                                 responseType = TypeOffer.NEGATIVE_RESPONSE_CONFIRMATION_ACHAT;
                                 offerPrice = message.getOffer().getPrice(); // On renvoie le prix proposé par l'acheteur
@@ -214,6 +218,7 @@ public class Provider extends Agent implements Runnable {
         this.offersMap.clear();
         for (Ticket ticket : this.tickets) {
             ticket.hasBeenSelled(false);
+            ticket.setQuantity(5);
         }
         this.active = true;
     }

@@ -8,18 +8,21 @@ public class Ticket {
     private double price;
     private double minPrice;
     private Company company;
-    /**
-     * Indique si le billet a été vendu ou non
-     */
     private boolean hasBeenSelled;
+    private int quantity;
 
     public Ticket(double price, double minPrice, String departure, String arrival, Company company) {
+        this(price, minPrice, departure, arrival, company, 5);
+    }
+
+    public Ticket(double price, double minPrice, String departure, String arrival, Company company, int quantity) {
         this.price = price;
         this.departure = departure;
         this.arrival = arrival;
         this.minPrice = minPrice;
         this.company = company;
         this.hasBeenSelled = false;
+        this.quantity = quantity;
     }
 
     public double getPrice() {
@@ -40,6 +43,21 @@ public class Ticket {
 
     public String getDeparture() {
         return departure;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
+    public void decrementQuantity(int amount) {
+        this.quantity = Math.max(0, this.quantity - amount);
+        if (this.quantity == 0) {
+            this.hasBeenSelled = true;
+        }
     }
 
     @Override
@@ -63,6 +81,7 @@ public class Ticket {
                 ", price=" + price +
                 ", minPrice=" + minPrice +
                 ", company=" + company +
+                ", quantity=" + quantity +
                 '}';
     }
 
