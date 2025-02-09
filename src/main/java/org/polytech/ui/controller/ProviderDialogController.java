@@ -9,7 +9,6 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
-import javafx.stage.Stage;
 import org.polytech.agent.Company;
 import org.polytech.agent.Provider;
 import org.polytech.agent.Ticket;
@@ -21,6 +20,7 @@ import java.util.ArrayList;
 public class ProviderDialogController {
     @FXML private TextField nameField;
     @FXML private ListView<Ticket> ticketsList;
+    @FXML private Button buttonAddTicket;
     private final ObservableList<Ticket> tickets = FXCollections.observableArrayList();
     private MessageManager messageManager;
     private Provider providerToEdit;
@@ -109,9 +109,11 @@ public class ProviderDialogController {
     @FXML
     private void handleAddTicket() {
         Dialog<Ticket> dialog = new Dialog<>();
+        dialog.initOwner(buttonAddTicket.getScene().getWindow());
         dialog.setTitle("Ajouter un ticket");
 
         DialogPane dialogPane = dialog.getDialogPane();
+        dialogPane.getStylesheets().add(getClass().getResource("/styles/style.css").toExternalForm());
         dialogPane.getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
         GridPane grid = new GridPane();
@@ -120,19 +122,31 @@ public class ProviderDialogController {
         grid.setPadding(new javafx.geometry.Insets(10));
 
         TextField priceField = new TextField();
+        priceField.getStyleClass().add("text-field");
         TextField fromField = new TextField();
+        fromField.getStyleClass().add("text-field");
         TextField toField = new TextField();
+        toField.getStyleClass().add("text-field");
         ComboBox<Company> companyBox = new ComboBox<>(
                 FXCollections.observableArrayList(Company.values())
         );
+        companyBox.getStyleClass().add("combo-box");
 
-        grid.add(new Label("Prix:"), 0, 0);
+        Label priceLabel = new Label("Prix:");
+        priceLabel.getStyleClass().add("header-label");
+        grid.add(priceLabel, 0, 0);
         grid.add(priceField, 1, 0);
-        grid.add(new Label("Départ:"), 0, 1);
+        Label departureLabel = new Label("Départ:");
+        departureLabel.getStyleClass().add("header-label");
+        grid.add(departureLabel, 0, 1);
         grid.add(fromField, 1, 1);
-        grid.add(new Label("Destination:"), 0, 2);
+        Label destinationLabel = new Label("Destination:");
+        destinationLabel.getStyleClass().add("header-label");
+        grid.add(destinationLabel, 0, 2);
         grid.add(toField, 1, 2);
-        grid.add(new Label("Compagnie:"), 0, 3);
+        Label companyLabel = new Label("Compagnie:");
+        companyLabel.getStyleClass().add("header-label");
+        grid.add(companyLabel, 0, 3);
         grid.add(companyBox, 1, 3);
 
         dialogPane.setContent(grid);

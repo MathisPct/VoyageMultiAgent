@@ -5,32 +5,33 @@
 <?import javafx.geometry.Insets?>
 
 <DialogPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml">
+            xmlns:fx="http://javafx.com/fxml"
+            stylesheets="@styles/style.css">
     <content>
-        <VBox spacing="10" prefWidth="400">
+        <VBox spacing="10" styleClass="container" prefWidth="600">
             <padding>
                 <Insets top="10" right="10" bottom="10" left="10"/>
             </padding>
             
-            <Label text="Nom:"/>
+            <Label text="Nom:" styleClass="text-subtitle"/>
             <TextField fx:id="nameField"/>
             
-            <Label text="Budget maximum:"/>
+            <Label text="Budget maximum:" styleClass="text-subtitle"/>
             <TextField fx:id="budgetField"/>
             
-            <Label text="Intérêt (1-10):"/>
+            <Label text="Intérêt (1-10):" styleClass="text-subtitle"/>
             <TextField fx:id="interestField"/>
             
-            <Label text="Compagnies autorisées:"/>
+            <Label text="Compagnies autorisées:" styleClass="text-subtitle"/>
             <ListView fx:id="allowedCompanies" prefHeight="100"/>
             
-            <Label text="Nouvelle destination:"/>
+            <Label text="Nouvelle destination:" styleClass="text-subtitle"/>
             <HBox spacing="10">
                 <TextField fx:id="destinationField" HBox.hgrow="ALWAYS"/>
                 <Button text="Ajouter" onAction="#handleAddDestination"/>
             </HBox>
             
-            <Label text="Destinations:"/>
+            <Label text="Destinations:" styleClass="text-subtitle"/>
             <ListView fx:id="destinationsList" prefHeight="100"/>
         </VBox>
     </content>

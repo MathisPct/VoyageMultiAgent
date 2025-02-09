@@ -6,11 +6,8 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
 import org.polytech.agent.*;
 import org.polytech.agent.constraints.BuyerConstraints;
 import org.polytech.agent.strategy.InterestBasedBuyerStrategy;
@@ -21,13 +18,15 @@ import org.polytech.messaging.MessageManagerSimpleImpl;
 import org.polytech.agent.Coalition;
 import org.polytech.agent.strategy.CoalitionFormationStrategy;
 
-import java.io.File;
 import java.net.URL;
 import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.io.IOException;
 
 public class MainController implements Initializable {
     @FXML private ListView<AgentCouple> conversationsList;
-    @FXML private ListView<Message> messagesList;
+    @FXML private TabPane ticketsTabPane;
     @FXML private ListView<Provider> providersList;
     @FXML private ListView<Buyer> buyersList;
     @FXML private ToggleButton cooperativeToggle;
@@ -37,6 +36,9 @@ public class MainController implements Initializable {
     private MessageManagerSimpleImpl messageManager = new MessageManagerSimpleImpl();
     private CoalitionFormationStrategy coalitionStrategy;
     private List<Coalition> currentCoalitions = new ArrayList<>();
+    
+    // Map pour suivre les onglets de tickets
+    private Map<String, TicketTabController> ticketTabs = new HashMap<>();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -187,34 +189,84 @@ public class MainController implements Initializable {
     }
 
     private void setupMessageDisplay() {
-        messagesList.setCellFactory(param -> new ListCell<Message>() {
-            @Override
-            protected void updateItem(Message item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText(String.format("[%s] %s -> %s: %.2f€ (%s)", 
-                        item.getDateEmission().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss")),
-                        item.getIssuer().getName(),
-                        item.getReceiver().getName(),
-                        item.getOffer().getPrice(),
-                        item.getOffer().getTypeOffer()));
-                }
-            }
-        });
-
         conversationsList.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
-                messagesList.getItems().clear();
-                List<Message> messages = messageManager.getAgentMessageHashMap().get(newVal);
-                if (messages != null) {
-                    List<Message> sortedMessages = new ArrayList<>(messages);
-                    sortedMessages.sort(Comparator.comparing(Message::getDateEmission));
-                    messagesList.getItems().addAll(sortedMessages);
-                }
+                updateMessagesForConversation(newVal);
             }
         });
+    }
+
+    private void updateMessagesForConversation(AgentCouple couple) {
+        List<Message> messages = messageManager.getAgentMessageHashMap().get(couple);
+        if (messages != null) {
+            List<Message> sortedMessages = new ArrayList<>(messages);
+            sortedMessages.sort(Comparator.comparing(Message::getDateEmission));
+            
+            Map<Ticket, List<Message>> messagesByTicket = new HashMap<>();
+            sortedMessages.forEach(msg -> {
+                Ticket ticket = msg.getOffer().getTicket();
+                messagesByTicket.computeIfAbsent(ticket, k -> new ArrayList<>()).add(msg);
+            });
+
+            updateTicketTabs(messagesByTicket, couple);
+        }
+    }
+
+    private void updateTicketTabs(Map<Ticket, List<Message>> messagesByTicket, AgentCouple couple) {
+        // Supprimer les onglets qui ne sont plus nécessaires
+        ticketsTabPane.getTabs().removeIf(tab -> {
+            String tabId = tab.getId();
+            return tabId != null && !messagesByTicket.containsKey(getTicketFromTabId(tabId));
+        });
+
+        // Mettre à jour ou créer les onglets nécessaires
+        messagesByTicket.forEach((ticket, messages) -> {
+            String tabId = getTabId(ticket);
+            TicketTabController controller = ticketTabs.get(tabId);
+            
+            if (controller == null) {
+                // Créer un nouvel onglet
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/ticket-tab.fxml"));
+                    Tab newTab = new Tab();
+                    newTab.setId(tabId);
+                    newTab.setText(String.format("%s → %s", ticket.getDeparture(), ticket.getArrival()));
+                    newTab.setClosable(false);
+                    newTab.setContent(loader.load());
+                    controller = loader.getController();
+                    ticketTabs.put(tabId, controller);
+                    ticketsTabPane.getTabs().add(newTab);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    return;
+                }
+            }
+
+            // Mettre à jour le contenu
+            Buyer buyer = (couple.agent2() instanceof Buyer) ? (Buyer) couple.agent2() : null;
+            controller.clearMessages();
+            controller.updateTicketInfo(ticket, buyer);
+            messages.forEach(controller::addMessage);
+        });
+    }
+
+    private String getTabId(Ticket ticket) {
+        return String.format("%s-%s-%s-%d", 
+            ticket.getDeparture(),
+            ticket.getArrival(),
+            ticket.getCompany(),
+            ticket.hashCode());
+    }
+
+    private Ticket getTicketFromTabId(String tabId) {
+        for (Provider provider : providers) {
+            for (Ticket ticket : provider.getTickets()) {
+                if (getTabId(ticket).equals(tabId)) {
+                    return ticket;
+                }
+            }
+        }
+        return null;
     }
 
     private void startConversationUpdateTimer() {
@@ -386,7 +438,7 @@ public class MainController implements Initializable {
 
     @FXML
     public void launchNegociation(ActionEvent actionEvent) {
-        // Log des quantités initiales de tickets
+        // Log des quantités initiales de tickets:
         System.out.println("\nQuantités initiales de tickets:");
         providers.forEach(provider -> 
             provider.getTickets().forEach(ticket -> 
@@ -424,9 +476,8 @@ public class MainController implements Initializable {
 
     @FXML
     public void resetNegociation(ActionEvent actionEvent) {
-        // Reset coalitions
-        currentCoalitions.clear();
-        
+        currentCoalitions = new ArrayList<>();
+
         // Reset all agents
         providers.forEach(Agent::reset);
         buyers.forEach(buyer -> {
@@ -434,7 +485,11 @@ public class MainController implements Initializable {
             buyer.reset();
         });
 
-        this.messagesList.getItems().clear();
+        // Clear all ticket tabs
+        ticketsTabPane.getTabs().clear();
+        ticketTabs.clear();
+        
+        // Reset message manager
         this.messageManager.reset();
     }
 }
