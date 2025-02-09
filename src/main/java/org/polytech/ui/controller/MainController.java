@@ -18,6 +18,8 @@ import org.polytech.agent.strategy.InterestBasedProviderStrategy;
 import org.polytech.messaging.AgentCouple;
 import org.polytech.messaging.Message;
 import org.polytech.messaging.MessageManagerSimpleImpl;
+import org.polytech.agent.Coalition;
+import org.polytech.agent.strategy.CoalitionFormationStrategy;
 
 import java.io.File;
 import java.net.URL;
@@ -28,44 +30,68 @@ public class MainController implements Initializable {
     @FXML private ListView<Message> messagesList;
     @FXML private ListView<Provider> providersList;
     @FXML private ListView<Buyer> buyersList;
+    @FXML private ToggleButton cooperativeToggle;
 
     private final ObservableList<Provider> providers = FXCollections.observableArrayList();
     private final ObservableList<Buyer> buyers = FXCollections.observableArrayList();
     private MessageManagerSimpleImpl messageManager = new MessageManagerSimpleImpl();
+    private CoalitionFormationStrategy coalitionStrategy;
+    private List<Coalition> currentCoalitions = new ArrayList<>();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // Initialize providers and buyers lists from Agent static lists
         Provider provider = new Provider(messageManager, List.of(
-                new Ticket(85, 85 * 0.9, "Paris", "Amsterdam", Company.TRANSAVIA),
-                new Ticket(75, 75 * 0.9, "Paris", "Amsterdam", Company.KLM),
-                new Ticket(70, 70 * 0.9, "Paris", "Amsterdam", Company.KLM),
-                new Ticket(80, 80 * 0.9, "Paris", "Amsterdam", Company.TRANSAVIA),
-                new Ticket(75, 75 * 0.9, "Paris", "Lyon", Company.TRANSAVIA),
-                new Ticket(85, 85 * 0.9, "Paris", "Lille", Company.TRANSAVIA),
-                new Ticket(90, 90 * 0.9, "Paris", "Bordeaux", Company.AIR_FRANCE),
-                new Ticket(100, 100 * 0.9, "Amsterdam", "Stockholm ", Company.KLM)
+                new Ticket(85, 85 * 0.9, "Paris", "Amsterdam", Company.TRANSAVIA, 5),
+                new Ticket(75, 75 * 0.9, "Paris", "Amsterdam", Company.KLM, 5),
+                new Ticket(70, 70 * 0.9, "Paris", "Amsterdam", Company.KLM, 5),
+                new Ticket(80, 80 * 0.9, "Paris", "Amsterdam", Company.TRANSAVIA, 5),
+                new Ticket(75, 75 * 0.9, "Paris", "Lyon", Company.TRANSAVIA, 5),
+                new Ticket(85, 85 * 0.9, "Paris", "Lille", Company.TRANSAVIA, 5),
+                new Ticket(90, 90 * 0.9, "Paris", "Bordeaux", Company.AIR_FRANCE, 5),
+                new Ticket(100, 100 * 0.9, "Amsterdam", "Stockholm", Company.KLM, 5)
         ), 5, "Provider 1");
         provider.setNegociationStrategy(new InterestBasedProviderStrategy());
 
         providers.addAll(Agent.getProviders());
 
+//        BuyerConstraints buyerConstraints1 = new BuyerConstraints(75);
+//        buyerConstraints1.addAllowedCompany(Company.KLM);
+//        buyerConstraints1.addDestination("Amsterdam");
+//        Buyer buyer1 = new Buyer(messageManager, buyerConstraints1, "Acheteur 1", 6);
+//        buyer1.setNegociationStrategy(new InterestBasedBuyerStrategy());
+//
+//        BuyerConstraints buyerConstraints2 = new BuyerConstraints(75);
+//        buyerConstraints2.addAllowedCompany(Company.KLM);
+//        buyerConstraints2.addDestination("Amsterdam");
+//        Buyer buyer2 = new Buyer(messageManager, buyerConstraints2, "Acheteur 2", 6);
+//        buyer2.setNegociationStrategy(new InterestBasedBuyerStrategy());
+//
+//        BuyerConstraints buyerConstraints3 = new BuyerConstraints(75);
+//        buyerConstraints3.addAllowedCompany(Company.KLM);
+//        buyerConstraints3.addDestination("Stockholm");
+//        Buyer buyer3 = new Buyer(messageManager, buyerConstraints3, "Acheteur 3", 7);
+//        buyer3.setNegociationStrategy(new InterestBasedBuyerStrategy());
+
+        // Create buyers with similar destinations to test coalition formation
         BuyerConstraints buyerConstraints1 = new BuyerConstraints(75);
         buyerConstraints1.addAllowedCompany(Company.KLM);
         buyerConstraints1.addDestination("Amsterdam");
+        buyerConstraints1.addDestination("Stockholm");
         Buyer buyer1 = new Buyer(messageManager, buyerConstraints1, "Acheteur 1", 6);
         buyer1.setNegociationStrategy(new InterestBasedBuyerStrategy());
 
-        BuyerConstraints buyerConstraints2 = new BuyerConstraints(75);
+        BuyerConstraints buyerConstraints2 = new BuyerConstraints(85);
         buyerConstraints2.addAllowedCompany(Company.KLM);
         buyerConstraints2.addDestination("Amsterdam");
-        Buyer buyer2 = new Buyer(messageManager, buyerConstraints2, "Acheteur 2", 6);
+        buyerConstraints2.addDestination("Stockholm");
+        Buyer buyer2 = new Buyer(messageManager, buyerConstraints2, "Acheteur 2", 7);
         buyer2.setNegociationStrategy(new InterestBasedBuyerStrategy());
 
-        BuyerConstraints buyerConstraints3 = new BuyerConstraints(75);
+        BuyerConstraints buyerConstraints3 = new BuyerConstraints(95);
         buyerConstraints3.addAllowedCompany(Company.KLM);
-        buyerConstraints3.addDestination("Stockholm");
-        Buyer buyer3 = new Buyer(messageManager, buyerConstraints3, "Acheteur 3", 7);
+        buyerConstraints3.addDestination("Amsterdam");
+        Buyer buyer3 = new Buyer(messageManager, buyerConstraints3, "Acheteur 3", 8);
         buyer3.setNegociationStrategy(new InterestBasedBuyerStrategy());
 
         buyers.addAll(Agent.getBuyers());
@@ -73,6 +99,13 @@ public class MainController implements Initializable {
         setupListViews();
         setupMessageDisplay();
         startConversationUpdateTimer();
+
+        coalitionStrategy = new CoalitionFormationStrategy(buyers);
+        
+        cooperativeToggle.setSelected(false);
+        cooperativeToggle.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            coalitionStrategy.setCooperative(newVal);
+        });
     }
 
     private void setupListViews() {
@@ -353,14 +386,53 @@ public class MainController implements Initializable {
 
     @FXML
     public void launchNegociation(ActionEvent actionEvent) {
+        // Log des quantités initiales de tickets
+        System.out.println("\nQuantités initiales de tickets:");
+        providers.forEach(provider -> 
+            provider.getTickets().forEach(ticket -> 
+                System.out.println(String.format("Ticket %s → %s (%s): %d disponibles", 
+                    ticket.getDeparture(), 
+                    ticket.getArrival(), 
+                    ticket.getCompany(),
+                    ticket.getQuantity()))
+            )
+        );
+
+        // Form coalitions first
+        currentCoalitions = coalitionStrategy.formCoalitions();
+        
+        // Log formed coalitions
+        System.out.println("\nCoalitions formées:");
+        currentCoalitions.forEach(System.out::println);
+        
+        // Start negotiation for each coalition's representative
+        for (Coalition coalition : currentCoalitions) {
+            Buyer representative = coalition.getRepresentative();
+            if (representative != null) {
+                // Set the coalition size in the representative's constraints
+                // so they know to buy multiple tickets
+                representative.getBuyerConstraints().setCoalitionSize(coalition.getSize());
+                // Adjust the budget to be the coalition's budget
+                representative.getBuyerConstraints().setMaxBudget(coalition.getCoalitionBudget());
+                new Thread(representative).start();
+            }
+        }
+        
+        // Start all providers
         providers.forEach(provider -> new Thread(provider).start());
-        buyers.forEach(buyer -> new Thread(buyer).start());
     }
 
     @FXML
     public void resetNegociation(ActionEvent actionEvent) {
+        // Reset coalitions
+        currentCoalitions.clear();
+        
+        // Reset all agents
         providers.forEach(Agent::reset);
-        buyers.forEach(Agent::reset);
+        buyers.forEach(buyer -> {
+            buyer.getBuyerConstraints().setCoalitionSize(1); // Reset to individual
+            buyer.reset();
+        });
 
         this.messagesList.getItems().clear();
         this.messageManager.reset();

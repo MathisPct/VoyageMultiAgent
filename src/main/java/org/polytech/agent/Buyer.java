@@ -32,14 +32,26 @@ public class Buyer extends Agent implements Runnable {
 
     private void makeAllNegociation() {
         findSuitableTicket().forEach((ticket, provider) -> {
-            // Première phase de négociation
-            System.out.println(this.getName() + " begins the negociation for " + ticket);
-            this.negotiationRounds = 0;
-            Offer finalOffer = processNegociation(ticket, provider);
-            choices.push(new BuyerChoice(provider, finalOffer));
+            // For coalitions, we need to negotiate for multiple tickets
+            int ticketsNeeded = this.buyerConstraints.getCoalitionSize();
+            if (ticketsNeeded > 1) {
+                System.out.println("[" + this.getName() + "] negotiating for " + ticketsNeeded + " tickets as coalition representative");
+            }
+            
+            // Only proceed if enough tickets are available
+            if (ticket.getQuantity() >= ticketsNeeded) {
+                // Première phase de négociation
+                System.out.println(this.getName() + " begins the negociation for " + ticket + " (quantity needed: " + ticketsNeeded + ")");
+                this.negotiationRounds = 0;
+                Offer finalOffer = processNegociation(ticket, provider);
+                
+                if (finalOffer != null) {
+                    choices.push(new BuyerChoice(provider, finalOffer));
+                }
+            }
         });
 
-        // Deuxième phase de négociation: choisir la meilleure offre parmi les offres reçues et on attend la confirmation de l'achat
+        // Deuxième phase de négociation
         if (findSuitableTicket().isEmpty()) {
             System.out.println("[" + this.getName() + "] found no suitable ticket based on constraints. Stopping.");
             return;
@@ -47,7 +59,9 @@ public class Buyer extends Agent implements Runnable {
 
         BuyerChoice choice = chooseBestOffer();
         if(choice != null) {
-            System.out.println("[" + this.getName() + "] has chosen the best offer: " + choice.offer().getPrice() + " from " + choice.provider().getName());
+            System.out.println("[" + this.getName() + "] has chosen the best offer: " + choice.offer().getPrice() + 
+                " from " + choice.provider().getName() + 
+                " (x" + this.buyerConstraints.getCoalitionSize() + " tickets)");
         }
     }
 
@@ -210,6 +224,12 @@ public class Buyer extends Agent implements Runnable {
                 }
                 case INITIAL -> {
                     System.out.println("[" + this.getName() + "] received an INITIAL offer (unexpected in this flow).");
+                }
+                case POSITIVE_RESPONSE_CONFIRMATION_ACHAT, 
+                NEGATIVE_RESPONSE_CONFIRMATION_ACHAT,
+                DEMAND_CONFIRMATION_ACHAT -> {
+                    // These cases are handled in chooseBestOffer() method
+                    System.out.println("[" + this.getName() + "] Unexpected message type in negotiation phase: " + response.getOffer().getTypeOffer());
                 }
             }
         }

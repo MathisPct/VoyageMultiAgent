@@ -43,7 +43,13 @@
                         <padding>
                             <Insets top="10" right="10" bottom="10" left="10"/>
                         </padding>
-                        <Button text="Lancer la négociation" onAction="#launchNegociation"/>
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <Label text="Mode:" />
+                            <ToggleButton fx:id="cooperativeToggle" text="Coopératif" />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <Button text="Lancer la négociation" onAction="#launchNegociation"/>
+                            <Button text="Réinitialisation" onAction="#resetNegociation"/>
+                        </HBox>
                         <SplitPane VBox.vgrow="ALWAYS">
                             <VBox>
                                 <TitledPane text="Conversations" expanded="true" VBox.vgrow="ALWAYS">
