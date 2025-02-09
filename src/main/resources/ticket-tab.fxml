@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="org.polytech.ui.controller.TicketTabController"
+      spacing="10"
+      styleClass="container"
+      stylesheets="@styles/style.css">
+    <!-- Informations sur le ticket -->
+    <VBox styleClass="ticket-info">
+        <TextFlow fx:id="ticketInfoText">
+            <Text fx:id="ticketBasicInfo" styleClass="text-title"/>
+            <Text fx:id="ticketDetailsInfo" styleClass="text-normal"/>
+        </TextFlow>
+        <TextFlow fx:id="buyerInfoText">
+            <Text fx:id="buyerBasicInfo" styleClass="text-title"/>
+            <Text fx:id="buyerDetailsInfo" styleClass="text-normal"/>
+        </TextFlow>
+    </VBox>
+    
+    <!-- Phases de négociation -->
+    <TabPane VBox.vgrow="ALWAYS" styleClass="phase-tab-pane">
+        <tabs>
+            <Tab text="Phase 1 - Négociation initiale" closable="false" styleClass="tab">
+                <ListView fx:id="firstPhaseMessages" styleClass="message-list"/>
+            </Tab>
+            <Tab text="Phase 2 - Confirmation d'achat" closable="false" styleClass="tab">
+                <ListView fx:id="secondPhaseMessages" styleClass="message-list"/>
+            </Tab>
+        </tabs>
+    </TabPane>
+</VBox>

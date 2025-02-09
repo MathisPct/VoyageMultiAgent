@@ -5,20 +5,21 @@
 <?import javafx.geometry.Insets?>
 
 <DialogPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml">
+            xmlns:fx="http://javafx.com/fxml"
+            stylesheets="@styles/style.css">
     <content>
-        <VBox spacing="10" prefWidth="400">
+        <VBox spacing="10" styleClass="container" prefWidth="600">
             <padding>
                 <Insets top="10" right="10" bottom="10" left="10"/>
             </padding>
             
-            <Label text="Nom:"/>
+            <Label text="Nom:" styleClass="header-label"/>
             <TextField fx:id="nameField"/>
             
-            <Label text="Tickets:"/>
-            <ListView fx:id="ticketsList" VBox.vgrow="ALWAYS" prefHeight="200"/>
+            <Label text="Tickets:" styleClass="header-label"/>
+            <ListView fx:id="ticketsList" VBox.vgrow="ALWAYS" prefHeight="200" styleClass="message-list"/>
             
-            <Button text="Ajouter un ticket" onAction="#handleAddTicket"/>
+            <Button fx:id="buttonAddTicket" text="Ajouter un ticket" onAction="#handleAddTicket"/>
         </VBox>
     </content>
     <buttonTypes>

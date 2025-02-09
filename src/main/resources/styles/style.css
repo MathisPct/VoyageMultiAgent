@@ -1,0 +1,226 @@
+/* Couleurs thème */
+* {
+    -fx-primary: #066460;
+    -fx-primary-light: #009a7c;
+    -fx-primary-dark: #35ac72;
+    -fx-accent: #066460;
+    -fx-grey: #b9b9b9;
+    -fx-font-size: 16px;
+}
+
+/* Style général */
+.root {
+    -fx-background-color: #FFFFFF;
+}
+
+/* ListView styling */
+.list-view {
+    -fx-background-color: white;
+    -fx-background-radius: 5;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 5;
+    -fx-padding: 2;
+}
+
+.list-cell {
+    -fx-background-color: transparent;
+    -fx-padding: 8 12 8 12;
+    -fx-text-fill: #212121;
+}
+
+.list-cell:filled:hover {
+    -fx-background-color: #f5f5f5;
+}
+
+.list-cell:selected {
+    -fx-background-color: derive(-fx-primary, 90%);
+}
+
+/* Button styling */
+.button {
+    -fx-background-color: -fx-primary;
+    -fx-text-fill: white;
+    -fx-background-radius: 3;
+    -fx-padding: 5 15 5 15;
+}
+
+.button:hover {
+    -fx-background-color: -fx-primary-light;
+}
+
+.button:pressed {
+    -fx-background-color: -fx-primary-dark;
+}
+
+/* ToggleButton styling */
+.toggle-button {
+    -fx-background-color: #e0e0e0;
+    -fx-text-fill: #424242;
+    -fx-background-radius: 3;
+    -fx-padding: 5 15 5 15;
+}
+
+.toggle-button:selected {
+    -fx-background-color: -fx-accent;
+    -fx-text-fill: white;
+}
+
+/* TitledPane styling */
+.titled-pane {
+    -fx-text-fill: -fx-primary-dark;
+}
+
+.titled-pane > .title {
+    -fx-background-color: white;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1;
+}
+
+.titled-pane > .content {
+    -fx-background-color: white;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1;
+}
+
+/* SplitPane styling */
+.split-pane {
+    -fx-background-color: transparent;
+}
+
+.split-pane > .split-pane-divider {
+    -fx-background-color: #e0e0e0;
+    -fx-padding: 0 0.5 0 0.5;
+}
+
+/* VBox and HBox containers */
+.container {
+    -fx-background-color: white;
+    -fx-background-radius: 5;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 5;
+    -fx-padding: 10;
+}
+
+/* Headers */
+.header-label {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -fx-primary-dark;
+}
+
+/* Message cells custom styling */
+.message-cell {
+    -fx-background-color: white;
+    -fx-background-radius: 5;
+    -fx-border-radius: 5;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1;
+    -fx-padding: 10;
+}
+
+.tab-pane .tab-header-area .tab-header-background {
+    -fx-background-color: white;
+}
+
+.tab {
+    -fx-background-color: white;
+    -fx-background-radius: 5 5 0 0;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1;
+}
+
+.tab .tab-label {
+    -fx-text-fill: black;
+}
+
+.tab:selected {
+    -fx-background-color: -fx-primary;
+    -fx-background-insets: 0 0 0 0;
+    -fx-background-radius: 0 0 0 0;
+}
+
+.tab:selected .tab-label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+
+/* Ticket info section */
+.ticket-info {
+    -fx-background-color: #e7fce5;
+    -fx-background-radius: 5;
+    -fx-border-color: #fff9dd;
+    -fx-border-radius: 5;
+    -fx-padding: 15;
+}
+
+/* Dialog styling */
+.dialog-pane {
+    -fx-background-color: white;
+}
+
+.dialog-pane > .button-bar > .container {
+    -fx-background-color: white;
+}
+
+.dialog-pane > .content.label {
+    -fx-padding: 15;
+    -fx-text-fill: #424242;
+    -fx-font-size: 14px;
+}
+
+/* Scroll bar styling */
+.scroll-bar {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar:vertical .thumb,
+.scroll-bar:horizontal .thumb {
+    -fx-background-color: #b0b0b0;
+    -fx-background-radius: 5;
+}
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar .increment-arrow,
+.scroll-bar .decrement-arrow {
+    -fx-background-color: #606060;
+}
+
+/* TextField styling */
+.text-field {
+    -fx-background-color: white;
+    -fx-background-radius: 3;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 3;
+    -fx-padding: 5 8 5 8;
+}
+
+.combo-box {
+    -fx-background-color: white, white, white, white;
+    -fx-background-radius: 3;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 3;
+    -fx-padding: 5 8 5 8;
+}
+
+/* Text hierarchy */
+.text-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -fx-primary-dark;
+}
+
+.text-subtitle {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -fx-primary-dark;
+}
+
+.text-normal {
+    -fx-font-size: 14px;
+    -fx-text-fill: #424242;
+}

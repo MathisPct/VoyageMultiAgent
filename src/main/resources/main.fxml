@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
@@ -10,16 +7,17 @@
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="org.polytech.ui.controller.MainController"
-            prefHeight="600.0" prefWidth="1000.0">
+            prefHeight="800.0" prefWidth="1200.0"
+            stylesheets="@styles/style.css">
     <center>
         <TabPane>
             <tabs>
                 <Tab text="Gestion Agents" closable="false">
                     <SplitPane dividerPositions="0.5">
                         <!-- Panel Fournisseurs -->
-                        <VBox spacing="10" style="-fx-padding: 10;">
+                        <VBox spacing="10" styleClass="container">
                             <HBox alignment="CENTER_LEFT" spacing="10">
-                                <Label text="Fournisseurs" style="-fx-font-size: 16;"/>
+                                <Label text="Fournisseurs" styleClass="header-label"/>
                                 <Region HBox.hgrow="ALWAYS"/>
                                 <Button text="Ajouter" onAction="#showAddProviderDialog"/>
                             </HBox>
@@ -27,9 +25,9 @@
                         </VBox>
                         
                         <!-- Panel Acheteurs -->
-                        <VBox spacing="10" style="-fx-padding: 10;">
+                        <VBox spacing="10" styleClass="container">
                             <HBox alignment="CENTER_LEFT" spacing="10">
-                                <Label text="Acheteurs" style="-fx-font-size: 16;"/>
+                                <Label text="Acheteurs" styleClass="header-label"/>
                                 <Region HBox.hgrow="ALWAYS"/>
                                 <Button text="Ajouter" onAction="#showAddBuyerDialog"/>
                             </HBox>
@@ -43,23 +41,27 @@
                         <padding>
                             <Insets top="10" right="10" bottom="10" left="10"/>
                         </padding>
-                        <HBox spacing="10" alignment="CENTER_LEFT">
-                            <Label text="Mode:" />
-                            <ToggleButton fx:id="cooperativeToggle" text="Coopératif" />
-                            <Region HBox.hgrow="ALWAYS" />
+                        <HBox spacing="10" alignment="CENTER_LEFT" styleClass="container">
+                            <Label text="Mode:" styleClass="header-label"/>
+                            <ToggleButton fx:id="cooperativeToggle" text="Coopératif"/>
+                            <Region HBox.hgrow="ALWAYS"/>
                             <Button text="Lancer la négociation" onAction="#launchNegociation"/>
                             <Button text="Réinitialisation" onAction="#resetNegociation"/>
                         </HBox>
                         <SplitPane VBox.vgrow="ALWAYS">
-                            <VBox>
+                            <!-- Liste des conversations -->
+                            <VBox styleClass="container">
                                 <TitledPane text="Conversations" expanded="true" VBox.vgrow="ALWAYS">
                                     <ListView fx:id="conversationsList" VBox.vgrow="ALWAYS"/>
                                 </TitledPane>
                             </VBox>
-                            <VBox>
-                                <TitledPane text="Messages de la conversation" expanded="true" VBox.vgrow="ALWAYS">
-                                    <ListView fx:id="messagesList" VBox.vgrow="ALWAYS"/>
-                                </TitledPane>
+                            
+                            <!-- Panel de droite avec les tickets -->
+                            <VBox spacing="10" styleClass="container" VBox.vgrow="ALWAYS">
+                                <!-- Onglets des tickets -->
+                                <TabPane fx:id="ticketsTabPane" VBox.vgrow="ALWAYS">
+                                    <!-- Les onglets seront ajoutés dynamiquement -->
+                                </TabPane>
                             </VBox>
                         </SplitPane>
                     </VBox>
