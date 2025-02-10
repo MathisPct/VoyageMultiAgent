@@ -15,13 +15,10 @@ import org.polytech.agent.strategy.InterestBasedProviderStrategy;
 import org.polytech.messaging.AgentCouple;
 import org.polytech.messaging.Message;
 import org.polytech.messaging.MessageManagerSimpleImpl;
-import org.polytech.agent.Coalition;
 import org.polytech.agent.strategy.CoalitionFormationStrategy;
 
 import java.net.URL;
 import java.util.*;
-import java.util.HashMap;
-import java.util.Map;
 import java.io.IOException;
 
 public class MainController implements Initializable {
@@ -30,6 +27,9 @@ public class MainController implements Initializable {
     @FXML private ListView<Provider> providersList;
     @FXML private ListView<Buyer> buyersList;
     @FXML private ToggleButton cooperativeToggle;
+
+    // https://stackoverflow.com/questions/59551896/how-to-get-the-controller-of-an-included-fxml/59552853#59552853
+    @FXML private TicketsViewController ticketsViewController;
 
     private final ObservableList<Provider> providers = FXCollections.observableArrayList();
     private final ObservableList<Buyer> buyers = FXCollections.observableArrayList();
@@ -490,5 +490,16 @@ public class MainController implements Initializable {
         
         // Reset message manager
         this.messageManager.reset();
+    }
+
+    /**
+     * Quand on choisit la tab des tickets
+     */
+    @FXML
+    public void onTicketsTabChoosen() {
+        this.ticketsViewController.updateTickets(Agent.getProviders().stream().map(Provider::getTickets).reduce(new ArrayList<>(), (acc, tickets) -> {
+            acc.addAll(tickets);
+            return acc;
+        }));
     }
 }

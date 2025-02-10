@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="org.polytech.ui.controller.TicketsViewController"
+      styleClass="container"
+      spacing="10">
+    
+    <padding>
+        <Insets top="10" right="10" bottom="10" left="10"/>
+    </padding>
+
+    <Label text="Tickets disponibles" styleClass="text-title"/>
+    
+    <TableView fx:id="ticketsTable" VBox.vgrow="ALWAYS">
+        <columns>
+            <TableColumn fx:id="providerColumn" text="Fournisseur" prefWidth="150"/>
+            <TableColumn fx:id="departureColumn" text="Départ" prefWidth="150"/>
+            <TableColumn fx:id="arrivalColumn" text="Destination" prefWidth="150"/>
+            <TableColumn fx:id="priceColumn" text="Prix" prefWidth="100"/>
+            <TableColumn fx:id="companyColumn" text="Compagnie" prefWidth="150"/>
+            <TableColumn fx:id="quantityColumn" text="Quantité" prefWidth="100"/>
+        </columns>
+    </TableView>
+</VBox>

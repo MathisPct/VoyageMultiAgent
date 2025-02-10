@@ -21,6 +21,9 @@ public class Provider extends Agent implements Runnable {
     public Provider(MessageManager messageManager, List<Ticket> tickets, int interest, String name) {
         super(messageManager, name);
         this.tickets = tickets;
+        for (Ticket ticket : this.tickets) {
+            ticket.setProvider(this);
+        }
         this.interest = interest;
         Agent.addProvider(this);
     }
