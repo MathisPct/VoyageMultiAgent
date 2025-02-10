@@ -171,6 +171,7 @@ public class Buyer extends Agent implements Runnable {
                             ))
                     ) {
                         System.out.println("[" + this.getName() + "] accepts the offer of " + providerOffer);
+                        this.lastOfferPrice = providerOffer;
                         this.sendMessage(
                                 this.currentProvider,
                                 new Message(
@@ -246,6 +247,11 @@ public class Buyer extends Agent implements Runnable {
                         LocalDateTime.now()
                 )
         );
+
+        Message ackMessage = waitUntilReceiveMessage();
+        if (ackMessage != null && ackMessage.getOffer().getTypeOffer() == TypeOffer.END_FIRST_PHASE_NEGOCIATION) {
+            System.out.println("[" + this.getName() + "] received acknowledgment for end of first phase");
+        }
 
         return finalOffer;
     }

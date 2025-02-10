@@ -5,12 +5,10 @@ import org.polytech.messaging.Message;
 import org.polytech.messaging.MessageManager;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-import java.util.HashMap;
 
 public class Provider extends Agent implements Runnable {
     private double lastProposedPrice = 0.0;
@@ -128,17 +126,32 @@ public class Provider extends Agent implements Runnable {
                             double offerPrice = offers.get(bestBuyer);
                             
                             int requestedTickets = bestBuyer.getBuyerConstraints().getCoalitionSize(); // TODO: le faire dans le message
-                            if (bestBuyer == message.getIssuer() && !ticket.hasBeenSelled() && ticket.getQuantity() >= requestedTickets) {
+
+                            System.out.println("[" + this.getName() + "] Processing purchase request: Best buyer=" + bestBuyer.getName() +
+                                    ", Requesting buyer=" + buyerSender.getName() +
+                                    ", Ticket sold=" + ticket.hasBeenSelled() +
+                                    ", Available quantity=" + ticket.getQuantity() +
+                                    ", Requested quantity=" + requestedTickets);
+
+                            if (bestBuyer == buyerSender && !ticket.hasBeenSelled() && ticket.getQuantity() >= requestedTickets) {
                                 responseType = TypeOffer.POSITIVE_RESPONSE_CONFIRMATION_ACHAT;
-                                offersMap.get(ticket).entrySet().removeIf(entry -> entry.getKey() == bestBuyer);
-                                // On retire les autres offres placées par l'acheteur sur les autres ticket
-                                offersMap.forEach((t, offersMap) -> offersMap.entrySet().removeIf(entry -> entry.getKey() == bestBuyer));
-                                System.out.println("[" + this.getName() + "]" + " has accepted the offer of " + bestBuyer.getName() + " for " + requestedTickets + " tickets of " + ticket);
-                                
                                 ticket.decrementQuantity(requestedTickets);
+                                ticket.hasBeenSelled(true);
+
+                                // On retire les autres offres placées par l'acheteur sur les autres ticket
+                                offersMap.get(ticket).entrySet().removeIf(entry -> entry.getKey() == bestBuyer);
+                                offersMap.forEach((t, offersMap) -> offersMap.entrySet().removeIf(entry -> entry.getKey() == bestBuyer));
+
+                                System.out.println("[" + this.getName() + "] Accepted offer from " + bestBuyer.getName() +
+                                        " for " + requestedTickets + " tickets of " + ticket);
                             } else {
                                 responseType = TypeOffer.NEGATIVE_RESPONSE_CONFIRMATION_ACHAT;
-                                offerPrice = message.getOffer().getPrice(); // On renvoie le prix proposé par l'acheteur
+                                offerPrice = message.getOffer().getPrice();
+                                System.out.println("[" + this.getName() + "] Rejected purchase: bestBuyer=" + bestBuyer.getName() +
+                                        " requestingBuyer=" + buyerSender.getName() +
+                                        " isSold=" + ticket.hasBeenSelled() +
+                                        " quantity=" + ticket.getQuantity() +
+                                        " requested=" + requestedTickets);
                             }
 
                             this.sendMessage(
@@ -150,12 +163,10 @@ public class Provider extends Agent implements Runnable {
                                     LocalDateTime.now()
                                 )
                             );
-                            if(responseType == TypeOffer.POSITIVE_RESPONSE_CONFIRMATION_ACHAT) {
-                                ticket.hasBeenSelled(true);
-                            }
                         }
                     } else {
                         // Si pas d'offres, envoyer une réponse négative
+                        System.out.println("[" + this.getName() + "] No offers found for ticket " + ticket);
                         this.sendMessage(
                             message.getIssuer(),
                             new Message(
@@ -168,8 +179,18 @@ public class Provider extends Agent implements Runnable {
                     }
                 }
                 case END_FIRST_PHASE_NEGOCIATION -> {
-                    this.receiveFinalOffer(buyerSender, message.getOffer().getTicket(), message.getOffer().getPrice());
-                    System.out.println("[" + this.getName() + "] "  + buyerSender.getName() + " ended the first phase of negotiation, received its final offer.");
+                    this.receiveFinalOffer(buyerSender, ticket, proposalPrice);
+
+                    // Send acknowledgment back
+                    this.sendMessage(
+                            message.getIssuer(),
+                            new Message(
+                                    this,
+                                    message.getIssuer(),
+                                    new Offer(proposalPrice, ticket, TypeOffer.END_FIRST_PHASE_NEGOCIATION),
+                                    LocalDateTime.now()
+                            )
+                    );
                 }
                 case AGAINST_PROPOSITION -> {
                     NegociationContext negociationContext = new NegociationContext(
