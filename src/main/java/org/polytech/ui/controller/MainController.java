@@ -37,8 +37,8 @@ public class MainController implements Initializable {
     private CoalitionFormationStrategy coalitionStrategy;
     private List<Coalition> currentCoalitions = new ArrayList<>();
     
-    // Map pour suivre les onglets de tickets
-    private Map<String, TicketTabController> ticketTabs = new HashMap<>();
+    private Map<String, TicketTabController> ticketTabsController = new HashMap<>();
+    private Map<String, Tab> ticketsTabs = new HashMap<>();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -222,10 +222,9 @@ public class MainController implements Initializable {
         // Mettre à jour ou créer les onglets nécessaires
         messagesByTicket.forEach((ticket, messages) -> {
             String tabId = getTabId(ticket);
-            TicketTabController controller = ticketTabs.get(tabId);
+            TicketTabController ticketTabController = ticketTabsController.get(tabId);
             
-            if (controller == null) {
-                // Créer un nouvel onglet
+            if (ticketTabController == null) {
                 try {
                     FXMLLoader loader = new FXMLLoader(getClass().getResource("/ticket-tab.fxml"));
                     Tab newTab = new Tab();
@@ -233,29 +232,28 @@ public class MainController implements Initializable {
                     newTab.setText(String.format("%s → %s", ticket.getDeparture(), ticket.getArrival()));
                     newTab.setClosable(false);
                     newTab.setContent(loader.load());
-                    controller = loader.getController();
-                    ticketTabs.put(tabId, controller);
+                    ticketTabController = loader.getController();
+                    ticketTabsController.put(tabId, ticketTabController);
+                    this.ticketsTabs.put(tabId, newTab);
                     ticketsTabPane.getTabs().add(newTab);
                 } catch (IOException e) {
                     e.printStackTrace();
                     return;
                 }
+            } else {
+                ticketsTabPane.getTabs().add(this.ticketsTabs.get(tabId));
             }
 
             // Mettre à jour le contenu
             Buyer buyer = (couple.agent2() instanceof Buyer) ? (Buyer) couple.agent2() : null;
-            controller.clearMessages();
-            controller.updateTicketInfo(ticket, buyer);
-            messages.forEach(controller::addMessage);
+            ticketTabController.clearMessages();
+            ticketTabController.updateTicketInfo(ticket, buyer);
+            messages.forEach(ticketTabController::addMessage);
         });
     }
 
     private String getTabId(Ticket ticket) {
-        return String.format("%s-%s-%s-%d", 
-            ticket.getDeparture(),
-            ticket.getArrival(),
-            ticket.getCompany(),
-            ticket.hashCode());
+        return ticket.getId();
     }
 
     private Ticket getTicketFromTabId(String tabId) {
@@ -451,6 +449,7 @@ public class MainController implements Initializable {
         );
 
         // Form coalitions first
+        coalitionStrategy.setBuyers(buyers);
         currentCoalitions = coalitionStrategy.formCoalitions();
         
         // Log formed coalitions
@@ -487,7 +486,7 @@ public class MainController implements Initializable {
 
         // Clear all ticket tabs
         ticketsTabPane.getTabs().clear();
-        ticketTabs.clear();
+        ticketTabsController.clear();
         
         // Reset message manager
         this.messageManager.reset();

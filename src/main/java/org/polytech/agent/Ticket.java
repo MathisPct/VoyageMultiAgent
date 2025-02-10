@@ -1,8 +1,10 @@
 package org.polytech.agent;
 
 import java.util.Objects;
+import java.util.UUID;
 
 public class Ticket {
+    private String id;
     private String departure;
     private String arrival;
     private double price;
@@ -16,6 +18,7 @@ public class Ticket {
     }
 
     public Ticket(double price, double minPrice, String departure, String arrival, Company company, int quantity) {
+        this.id = UUID.randomUUID().toString();
         this.price = price;
         this.departure = departure;
         this.arrival = arrival;
@@ -23,6 +26,10 @@ public class Ticket {
         this.company = company;
         this.hasBeenSelled = false;
         this.quantity = quantity;
+    }
+
+    public String getId() {
+        return this.id;
     }
 
     public double getPrice() {
