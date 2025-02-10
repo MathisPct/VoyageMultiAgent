@@ -12,6 +12,7 @@ public class Ticket {
     private Company company;
     private boolean hasBeenSelled;
     private int quantity;
+    private Provider provider;
 
     public Ticket(double price, double minPrice, String departure, String arrival, Company company) {
         this(price, minPrice, departure, arrival, company, 5);
@@ -67,6 +68,22 @@ public class Ticket {
         }
     }
 
+    public void hasBeenSelled(boolean value) {
+        this.hasBeenSelled = value;
+    }
+
+    public boolean hasBeenSelled() {
+        return this.hasBeenSelled;
+    }
+
+    public Provider getProvider() {
+        return provider;
+    }
+
+    public void setProvider(Provider provider) {
+        this.provider = provider;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -90,13 +107,5 @@ public class Ticket {
                 ", company=" + company +
                 ", quantity=" + quantity +
                 '}';
-    }
-
-    public void hasBeenSelled(boolean value) {
-        this.hasBeenSelled = value;
-    }
-
-    public boolean hasBeenSelled() {
-        return this.hasBeenSelled;
     }
 }

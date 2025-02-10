@@ -66,6 +66,10 @@
                         </SplitPane>
                     </VBox>
                 </Tab>
+                
+                <Tab text="Tickets" onSelectionChanged="#onTicketsTabChoosen" closable="false">
+                    <fx:include fx:id="ticketsView" source="tickets-view.fxml"/>
+                </Tab>
             </tabs>
         </TabPane>
     </center>
