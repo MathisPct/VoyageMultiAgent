@@ -6,7 +6,7 @@ import org.polytech.agent.Coalition;
 import java.util.*;
 
 public class CoalitionFormationStrategy {
-    private final List<Buyer> buyers;
+    private List<Buyer> buyers;
     private final Map<Set<Buyer>, Coalition> coalitionCache = new HashMap<>();
     private final Map<Set<Buyer>, Double> valueCache = new HashMap<>();
     private boolean isCooperative = false;
@@ -14,6 +14,10 @@ public class CoalitionFormationStrategy {
 
     public CoalitionFormationStrategy(List<Buyer> buyers) {
         this.buyers = new ArrayList<>(buyers);
+    }
+
+    public void setBuyers(List<Buyer> buyers) {
+        this.buyers = buyers;
     }
 
     public void setCooperative(boolean cooperative) {
