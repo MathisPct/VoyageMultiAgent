@@ -1,6 +1,6 @@
-# Le projet
+## Le projet
 
-## Présentation générale du projet
+### Présentation générale du projet
 
 ![](/doc/0.png)
 
@@ -19,10 +19,10 @@ Ce projet comporte deux types d’agents : les fournisseurs et les acheteurs, ch
 * Chaque acheteur a une stratégie de négociation pour déterminer les offres initiales et les contre-offres qu'ils feront aux fournisseurs.  
 * Les acheteurs peuvent former des coalitions pour acheter des billets en groupe, ce qui peut influencer leur pouvoir de négociation.
 
-## Structure du projet   
+### Structure du projet   
 Le projet est organisé en plusieurs sous-systèmes interconnectés :
 
-### Sous-systèmes
+#### Sous-systèmes
 
 1. **Core System**  
      
@@ -54,7 +54,7 @@ Le projet est organisé en plusieurs sous-systèmes interconnectés :
    - Permet l'extension facile avec de nouvelles stratégies  
    - Sépare la logique de négociation du reste du système
 
-# La négociation
+## La négociation
 
 ![](/doc/1.png)
 
@@ -77,19 +77,19 @@ La négociation entre les agents se déroule en deux phases principales :
 ![](/doc/4.png)
 
 
-# Stratégies
+## Stratégies
 
 ![](/doc/5.png)
 
-## La stratégie naïve : 
+### La stratégie naïve : 
 
 **La stratégie naïve** est plutôt simple car pour l’acheteur on propose d’abord 60% du budget de l’acheteur en augmentant progressivement sans dépasser le budget maximum. Pour les fournisseurs, on baisse les prix de 10% à chaque contre-offre et en l’acceptant dès qu’elle atteint 90% du prix de base. 
 
-## La stratégie basée sur l’intérêt : 
+### La stratégie basée sur l’intérêt : 
 
 Nous avons mis en place un critère sur les agents qui est l’intérêt. Il représente l’envie de l’agent à acheter ou à vendre son ticket, plus son envie est grande, plus il va augmenter les prix pour les acheteurs, et diminuer le prix pour les fournisseurs. A l’inverse, si l’intérêt est bas,  le fournisseur va avoir tendance à ne pas trop baisser le prix et l’acheteur aura tendance à chercher une bonne affaire si son envie est basse, donc à ne pas augmenter le prix lors de la négociation. 
 
-### Fournisseur
+#### Fournisseur
 
 Le prix proposé dans l’offre initiale suit la formule suivante : 
 
@@ -113,7 +113,7 @@ prixMin(billet) est le prix minimum du billet défini
 ![](/doc/7.png) 
 En sachant que le fournisseur ne peut pas descendre en-dessous du prix minimum fixé pour le billet
 
-### Acheteur
+#### Acheteur
 
 Le prix proposé dans l’offre initiale suit la formule suivante : 
 
@@ -133,28 +133,28 @@ et x est l’intérêt de l’agent
 
 ![](/doc/9.png)
 
-## Mode Compétitif
+### Mode Compétitif
 
 En mode compétitif, chaque acheteur agit de manière indépendante dans le système :
 
-### Caractéristiques
+#### Caractéristiques
 
 - Négociation individuelle avec les fournisseurs  
 - Pas de partage d'information entre acheteurs  
 - Budget et contraintes individuels  
 - Un acheteur \= une transaction \= un billet
 
-### Stratégie de Négociation
+#### Stratégie de Négociation
 
 - Basée uniquement sur les contraintes personnelles  
 - Prise en compte de l'intérêt individuel (1-10)  
 - Augmentation progressive des offres en fonction du budget
 
-## Mode Coopératif
+### Mode Coopératif
 
 La formation de coalitions permet aux acheteurs ayant des intérêts communs de se regrouper pour négocier ensemble.
 
-### Formation des Coalitions
+#### Formation des Coalitions
 
 - Les coalitions sont formées en fonction de critères communs :  
   - Destinations communes  
@@ -163,7 +163,7 @@ La formation de coalitions permet aux acheteurs ayant des intérêts communs de 
 - Taille maximale d'une coalition : on a décidé de fixer à 3 acheteurs  
 - Un représentant est choisi pour chaque coalition (celui ayant le plus grand budget)
 
-### Stratégie de Formation des Coalitions
+#### Stratégie de Formation des Coalitions
 
 La stratégie de formation (`CoalitionFormationStrategy`) utilise plusieurs critères :
 
@@ -189,13 +189,13 @@ La stratégie de formation (`CoalitionFormationStrategy`) utilise plusieurs crit
    - Achète le nombre exact de billets nécessaires pour la coalition  
    - Vérifie la disponibilité des billets pour tout le groupe, c'est-à-dire si le nombre de billets demandé est disponible
 
-### Architecture
+#### Architecture
 
-#### Diagramme de séquence
+##### Diagramme de séquence
 
 ![](/doc/10.png)
 
-#### Implémentation Technique
+##### Implémentation Technique
 
 Le système utilise plusieurs classes clés :
 
