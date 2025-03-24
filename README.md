@@ -1,6 +1,3 @@
-PONCET Mathis  
-DUCHENE Guillaume
-
 # Le projet
 
 Structure du projet   
